@@ -9,7 +9,7 @@ import pandas as pd
 # Logging setup
 # --------------------------------------------------------
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(_name_)
 
 # --------------------------------------------------------
 # Hugging Face cache setup
@@ -42,7 +42,7 @@ except Exception as e:
 # Topic-specific guides
 # --------------------------------------------------------
 stress_guide = """
-😌 **Coping with Stress**
+😌 *Coping with Stress*
 
 1. Take short breaks every 1–2 hours of work/study.  
 2. Practice deep breathing (inhale 4s, exhale 6s).  
@@ -52,7 +52,7 @@ stress_guide = """
 """
 
 panic_guide = """
-😮‍💨 **Panic/Anxiety Attack Help**
+😮‍💨 *Panic/Anxiety Attack Help*
 
 1. Remind yourself: "This will pass."  
 2. Try 4-7-8 breathing (inhale 4s, hold 7s, exhale 8s).  
@@ -61,7 +61,7 @@ panic_guide = """
 """
 
 depression_guide = """
-🌧️ **When Feeling Low/Depressed**
+🌧 *When Feeling Low/Depressed*
 
 1. Keep a daily routine (wake/sleep times).  
 2. Schedule at least one enjoyable activity daily.  
@@ -71,7 +71,7 @@ depression_guide = """
 """
 
 sleep_guide = """
-🌙 **Better Sleep Tips**
+🌙 *Better Sleep Tips*
 
 1. Keep a fixed bedtime and wake-up time.  
 2. Avoid caffeine or phone screens 2 hours before bed.  
@@ -80,13 +80,13 @@ sleep_guide = """
 """
 
 resources = """
-📞 **Crisis Resources (If You’re Struggling)**
+📞 *Crisis Resources (If You’re Struggling)*
 
 - 988 Suicide & Crisis Lifeline: Call/text 988 (24/7, free, confidential).  
 - Crisis Text Line: Text HOME to 741741 (free, anonymous, 24/7).  
 - Soluna App: Free for ages 13–25 (iOS/Android).  
 
-⚠️ Reminder: This app is not medical advice—please consult a licensed professional if you’re in crisis.
+⚠ Reminder: This app is not medical advice—please consult a licensed professional if you’re in crisis.
 """
 
 # --------------------------------------------------------
@@ -145,7 +145,7 @@ if st.button("Get Advice") and user_input:
 
     for message in st.session_state.messages:
         role = "You" if message["role"] == "user" else "AI"
-        st.markdown(f"**{role}:** {message['content']}")
+        st.markdown(f"{role}:** {message['content']}")
 
 # --------------------------
 # Feature 2: Therapy Tips (general, always available)
@@ -180,4 +180,3 @@ if 'moods' in st.session_state and st.session_state.moods:
     st.line_chart(df.set_index('date')['mood'])
 
 st.write("Prototype v11.0: Topic-specific solutions with auto-clearing history.")
-
