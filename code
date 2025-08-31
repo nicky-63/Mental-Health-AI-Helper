@@ -1,0 +1,175 @@
+import os
+import streamlit as st
+from transformers import pipeline
+from datetime import datetime
+import logging
+import pandas as pd
+
+# --------------------------------------------------------
+# Logging setup
+# --------------------------------------------------------
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# --------------------------------------------------------
+# Hugging Face cache setup
+# --------------------------------------------------------
+cache_dir = "/tmp/hf_cache"
+os.environ["TRANSFORMERS_CACHE"] = cache_dir
+os.environ["HF_HOME"] = cache_dir
+os.environ["HUGGINGFACE_HUB_CACHE"] = cache_dir
+
+try:
+    os.makedirs(cache_dir, exist_ok=True)
+    logger.info(f"Created cache directory: {cache_dir}")
+except Exception as e:
+    logger.error(f"Cache directory error: {e}")
+    st.error(f"Cannot create cache directory: {e}. Please try refreshing or contact support.")
+    st.stop()
+
+# --------------------------------------------------------
+# Load model
+# --------------------------------------------------------
+try:
+    generator = pipeline('text-generation', model='distilgpt2', cache_dir=cache_dir)
+    logger.info("Successfully loaded distilgpt2 model")
+except Exception as e:
+    logger.error(f"Model loading failed: {e}")
+    st.error(f"Error loading model: {e}. Please try refreshing or contact support.")
+    st.stop()
+
+# --------------------------------------------------------
+# Guides and resources
+# --------------------------------------------------------
+attack_guide = """
+Panic/anxiety attacks feel intense but are temporary—most peak in 10 minutes. Use these steps to manage:
+
+1. *Recognize It's Temporary*: Remind yourself: "This is uncomfortable, but not dangerous—it will pass."
+2. *Controlled Breathing*:
+   - 4-7-8 Breathing: Inhale nose 4, hold 7, exhale mouth 8. Repeat 4 times.
+   - Box Breathing: Inhale 4 counts, hold 4, exhale 4, hold 4. Repeat 4-5 times.
+3. *Grounding*: 5-4-3-2-1: Name 5 things you see, 4 touch, 3 hear, 2 smell, 1 taste.
+4. *After*: Note triggers; if frequent, call/text 988 (free, 24/7).
+"""
+
+resources = """
+For serious issues, get help now:
+- 988 Suicide & Crisis Lifeline: Call/text 988 (24/7, free).
+- Crisis Text Line: Text HOME to 741741 (free, anonymous).
+- Soluna App: Free for ages 13-25 (iOS/Android).
+Not medical advice—see a professional.
+"""
+
+therapy_recommendations = """
+🌱 Therapy & Self-Help Options:
+
+1. **Cognitive Behavioral Therapy (CBT)**  
+   - Helps identify and change negative thought patterns.  
+   - Practice: Thought journaling, reframing negative thoughts.  
+
+2. **Mindfulness-Based Therapy**  
+   - Focuses on being present and reducing overthinking.  
+   - Practice: Daily 5–10 mins mindfulness meditation or mindful walking.  
+
+3. **Behavioral Activation**  
+   - Increases positive activities to boost mood.  
+   - Practice: Schedule small enjoyable tasks (walk, music, hobby).  
+
+4. **Journaling**  
+   - Write about your thoughts and feelings.  
+   - Helps track mood triggers and progress.  
+
+5. **Group or Online Therapy**  
+   - Talking with others going through similar struggles can reduce isolation.  
+   - Look into online platforms or local support groups.
+
+📌 Tip: Start small—choose one practice (like 4-7-8 breathing + journaling at night) and build consistency.
+"""
+
+serious_keywords = ["panic", "anxiety attack", "depressed", "suicidal"]
+
+# --------------------------------------------------------
+# AI Response generator
+# --------------------------------------------------------
+def generate_response(user_input):
+    is_serious = any(word in user_input.lower() for word in serious_keywords)
+    prompt = f"You are a supportive AI advisor for youth mental wellness. Provide practical steps, therapy suggestions, and self-care strategies. Use CBT, mindfulness, or behavioral techniques. For: '{user_input}', give structured, empathetic advice with tips."
+    try:
+        response = generator(
+            prompt,
+            max_length=200,
+            num_return_sequences=1,
+            temperature=0.7,
+            pad_token_id=generator.tokenizer.eos_token_id
+        )[0]['generated_text']
+
+        # Clean prompt from response
+        response = response.replace(prompt, "").strip()
+
+        # Always add therapy recommendations
+        response += "\n\n" + therapy_recommendations
+
+        # Add helplines + panic guide if critical
+        if is_serious:
+            response += "\n\n⚠️ It sounds serious. Please consider professional help too:\n" + resources + "\n\nIf in an attack: " + attack_guide
+        return response
+    except Exception as e:
+        logger.error(f"Error generating response: {e}")
+        return f"Sorry, something went wrong. Try again or use the Panic Guide below.\n\n{resources}\n\n{therapy_recommendations}"
+
+# --------------------------------------------------------
+# Streamlit App
+# --------------------------------------------------------
+st.title("Youth Mental Wellness AI Advisor (Enhanced v8.0)")
+st.write("Get advice, learn therapy tips, manage panic attacks, or track your mood. Not a replacement for therapy.")
+
+# --------------------------
+# Feature 1: Chatbot
+# --------------------------
+st.subheader("Chat for Advice")
+user_input = st.text_input("Your concern (e.g., 'I'm stressed'):")
+
+if st.button("Get Advice") and user_input:
+    st.session_state.setdefault('messages', [])
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    ai_response = generate_response(user_input)
+    st.session_state.messages.append({"role": "ai", "content": ai_response})
+
+if 'messages' in st.session_state:
+    for message in st.session_state.messages:
+        role = "You" if message["role"] == "user" else "AI"
+        st.markdown(f"**{role}:** {message['content']}")
+
+# --------------------------
+# Feature 2: Panic Guide
+# --------------------------
+st.subheader("Panic/Anxiety Attack Help")
+if st.button("Show Guide"):
+    st.write(attack_guide)
+
+# --------------------------
+# Feature 3: Therapy Tips
+# --------------------------
+st.subheader("Explore Therapy & Self-Help Options")
+with st.expander("Click to view therapy recommendations"):
+    st.write(therapy_recommendations)
+
+# --------------------------
+# Feature 4: Mood Tracking
+# --------------------------
+st.subheader("Track Your Mood")
+mood = st.slider("Rate your mood (1=low, 5=high)", 1, 5, 3)
+
+if st.button("Log Mood"):
+    st.session_state.setdefault('moods', []).append({
+        'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'mood': mood
+    })
+
+if 'moods' in st.session_state and st.session_state.moods:
+    st.write("Your Mood Trend:")
+    df = pd.DataFrame(st.session_state.moods)
+    df['date'] = pd.to_datetime(df['date'])
+    st.line_chart(df.set_index('date')['mood'])
+
+st.write("Prototype v8.0: Built with Generative AI for youth mental health, with therapy recommendations.")
