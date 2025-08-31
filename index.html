@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Helper</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --border-color: #e5e7eb;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+        }
+
+        .container {
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .section-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: var(--bg-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        .chat-container {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--bg-secondary);
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            max-width: 85%;
+        }
+
+        .message-user {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message-ai {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            white-space: pre-line;
+        }
+
+        .mood-slider-container {
+            padding: 1rem 0;
+        }
+
+        .mood-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #dc2626, #ea580c, #ca8a04, #16a34a, #059669);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .mood-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            border: 2px solid var(--primary-color);
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+        }
+
+        .mood-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            border: 2px solid var(--primary-color);
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+        }
+
+        .mood-display {
+            text-align: center;
+            margin-top: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .mood-chart {
+            margin-top: 1.5rem;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .expandable-trigger {
+            cursor: pointer;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+
+        .expandable-trigger:hover {
+            background-color: #e5e7eb;
+        }
+
+        .expandable-content {
+            display: none;
+            margin-top: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            white-space: pre-line;
+            line-height: 1.7;
+        }
+
+        .expandable-content.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .crisis-alert {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #dc2626;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+        }
+
+        .crisis-alert h3 {
+            color: #dc2626;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .crisis-alert p {
+            color: #7f1d1d;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: none;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin: 0.5rem 0;
+        }
+
+        .guide-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: var(--bg-primary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            white-space: pre-line;
+            line-height: 1.6;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .mood-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .input-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-row .form-group {
+                margin-bottom: 1rem;
+            }
+            
+            .section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Mental Health Helper</h1>
+            <p class="subtitle">
+                Professional guidance for mental wellness and emotional support.<br>
+                This tool provides evidence-based coping strategies and is not a substitute for professional mental health care.
+            </p>
+        </header>
+
+        <div class="crisis-alert">
+            <h3>Emergency Resources</h3>
+            <p>
+                <strong>988 Suicide & Crisis Lifeline:</strong> Call or text 988 (24/7, confidential)<br>
+                <strong>Crisis Text Line:</strong> Text HOME to 741741 (24/7, anonymous)
+            </p>
+        </div>
+
+        <section class="section">
+            <div class="section-header">
+                <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                <h2>Get Personalized Advice</h2>
+            </div>
+            
+            <div class="input-row">
+                <div class="form-group">
+                    <label class="form-label" for="userInput">
+                        Describe what you're experiencing (e.g., "stress at work", "panic attack", "trouble sleeping")
+                    </label>
+                    <input type="text" id="userInput" class="form-input" placeholder="What's on your mind?" autocomplete="off">
+                </div>
+                <button class="btn" onclick="getAdvice()" id="adviceBtn">Get Advice</button>
+            </div>
+            
+            <div class="loading" id="loadingIndicator">Generating personalized advice...</div>
+            <div class="chat-container" id="chatContainer">
+                <p style="color: var(--text-secondary); text-align: center; margin-top: 2rem;">
+                    Enter your concerns above to receive tailored guidance and coping strategies.
+                </p>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                <h2>Evidence-Based Therapeutic Techniques</h2>
+            </div>
+            
+            <div class="expandable-trigger" onclick="toggleSection('therapyContent')">
+                <strong>View therapeutic practices and self-help strategies →</strong>
+            </div>
+            <div class="expandable-content" id="therapyContent">
+                <div class="guide-content">
+<strong>Cognitive Behavioral Techniques</strong>
+• Thought challenging: Question negative automatic thoughts
+• Behavioral activation: Schedule meaningful activities daily
+• Problem-solving: Break challenges into manageable steps
+
+<strong>Mindfulness & Relaxation</strong>
+• Progressive muscle relaxation: Tense and release muscle groups
+• Mindful breathing: Focus on breath for 5-10 minutes daily
+• Grounding techniques: 5-4-3-2-1 sensory method
+
+<strong>Self-Care Strategies</strong>
+• Sleep hygiene: Consistent sleep schedule and bedtime routine
+• Physical activity: Regular movement to boost mood and energy
+• Social connection: Maintain relationships and seek support
+• Journaling: Track thoughts, feelings, and patterns
+
+<strong>Crisis Management</strong>
+• Safety planning: Identify warning signs and coping strategies
+• Support network: Have emergency contacts readily available
+• Professional resources: Know when to seek immediate help
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h2>Mood Tracking</h2>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="moodSlider">Current mood level</label>
+                <div class="mood-slider-container">
+                    <input type="range" min="1" max="5" value="3" class="mood-slider" id="moodSlider" oninput="updateMoodDisplay()">
+                    <div class="mood-scale">
+                        <span>Very Low</span>
+                        <span>Low</span>
+                        <span>Neutral</span>
+                        <span>Good</span>
+                        <span>Very Good</span>
+                    </div>
+                </div>
+                <div class="mood-display" id="moodDisplay">Current selection: 3 (Neutral)</div>
+            </div>
+            
+            <button class="btn" onclick="logMood()">Log Mood Entry</button>
+            <div class="mood-chart" id="moodChart">
+                Mood tracking data will appear here after logging an entry.
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Mental Health Helper v11.0 | Evidence-based wellness support</p>
+            <p style="margin-top: 0.5rem; font-size: 0.75rem;">
+                This application provides general wellness information and is not intended as a substitute for professional medical advice, diagnosis, or treatment.
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        class MentalHealthApp {
+            constructor() {
+                this.moods = [];
+                this.chatHistory = [];
+                this.guides = this.initializeGuides();
+                this.initializeEventListeners();
+                this.updateMoodDisplay();
+            }
+
+            initializeGuides() {
+                return {
+                    stress: `STRESS MANAGEMENT STRATEGIES
+
+Immediate Relief:
+• Deep breathing: 4 counts in, 6 counts out
+• Progressive muscle relaxation
+• Take a 5-minute break from current activity
+
+Short-term Coping:
+• Break large tasks into smaller, manageable steps
+• Prioritize tasks using urgency/importance matrix
+• Practice time management techniques
+• Maintain regular exercise routine
+
+Long-term Management:
+• Develop consistent sleep schedule
+• Build support network
+• Consider stress management courses
+• Regular mindfulness or meditation practice`,
+
+                    panic: `PANIC ATTACK MANAGEMENT
+
+During an Attack:
+• Remind yourself: "This is temporary and will pass"
+• Use 4-7-8 breathing technique (inhale 4, hold 7, exhale 8)
+• Grounding exercise: Name 5 things you see, 4 you can touch, 3 you hear
+• Splash cold water on face or hold ice cubes
+
+Recovery Phase:
+• Avoid caffeine and stimulants
+• Practice relaxation techniques
+• Gradually return to normal activities
+• Consider keeping a panic attack diary
+
+CRISIS RESOURCES:
+• 988 Suicide & Crisis Lifeline: Call/text 988
+• Crisis Text Line: Text HOME to 741741
+• Emergency services: 911 if in immediate danger
+
+⚠️ Seek professional help for recurring panic attacks`,
+
+                    depression: `DEPRESSION SUPPORT STRATEGIES
+
+Daily Structure:
+• Maintain consistent wake/sleep times
+• Schedule at least one meaningful activity daily
+• Set small, achievable goals
+• Create routine anchors (meals, hygiene, etc.)
+
+Behavioral Activation:
+• Engage in previously enjoyed activities
+• Spend time outdoors when possible
+• Maintain social connections
+• Practice self-compassion
+
+Monitoring:
+• Track mood patterns and triggers
+• Journal thoughts and feelings
+• Note small positive moments
+• Monitor sleep and appetite changes
+
+CRISIS RESOURCES:
+• 988 Suicide & Crisis Lifeline: Call/text 988
+• Crisis Text Line: Text HOME to 741741
+• Soluna App: Ages 13-25 support
+
+⚠️ Professional help recommended for persistent symptoms`,
+
+                    sleep: `SLEEP HYGIENE PROTOCOL
+
+Sleep Schedule:
+• Consistent bedtime and wake time (even weekends)
+• Aim for 7-9 hours of sleep nightly
+• Avoid daytime naps over 20 minutes
+
+Pre-Sleep Routine (1-2 hours before bed):
+• Reduce screen exposure and blue light
+• Avoid caffeine, alcohol, and large meals
+• Engage in relaxing activities (reading, meditation)
+• Dim lights gradually
+
+Sleep Environment:
+• Cool temperature (65-68°F optimal)
+• Dark room with minimal noise
+• Comfortable mattress and pillows
+• Remove electronic devices from bedroom
+
+If Unable to Sleep:
+• Practice progressive muscle relaxation
+• Use guided sleep meditations
+• Try the 4-7-8 breathing technique
+• If awake for 20+ minutes, leave bed and do quiet activity`
+                };
+            }
+
+            initializeEventListeners() {
+                const userInput = document.getElementById('userInput');
+                userInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.getAdvice();
+                    }
+                });
+            }
+
+            updateMoodDisplay() {
+                const slider = document.getElementById('moodSlider');
+                const display = document.getElementById('moodDisplay');
+                const value = parseInt(slider.value);
+                
+                const moodLabels = {
+                    1: 'Very Low',
+                    2: 'Low', 
+                    3: 'Neutral',
+                    4: 'Good',
+                    5: 'Very Good'
+                };
+                
+                display.textContent = `Current selection: ${value} (${moodLabels[value]})`;
+            }
+
+            getAdvice() {
+                const input = document.getElementById('userInput').value.trim();
+                if (!input) return;
+
+                const chatContainer = document.getElementById('chatContainer');
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                const adviceBtn = document.getElementById('adviceBtn');
+
+                // Clear previous chat history
+                this.chatHistory = [];
+                chatContainer.innerHTML = '';
+
+                // Add user message
+                this.addMessage(input, 'user');
+
+                // Show loading state
+                loadingIndicator.style.display = 'block';
+                adviceBtn.disabled = true;
+                adviceBtn.textContent = 'Processing...';
+
+                // Simulate processing time and generate response
+                setTimeout(() => {
+                    const response = this.generateResponse(input);
+                    this.addMessage(response, 'ai');
+                    
+                    loadingIndicator.style.display = 'none';
+                    adviceBtn.disabled = false;
+                    adviceBtn.textContent = 'Get Advice';
+                }, 1200);
+
+                // Clear input
+                document.getElementById('userInput').value = '';
+            }
+
+            addMessage(content, role) {
+                const chatContainer = document.getElementById('chatContainer');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message message-${role}`;
+                
+                if (role === 'user') {
+                    messageDiv.textContent = content;
+                } else {
+                    messageDiv.textContent = content;
+                    messageDiv.style.whiteSpace = 'pre-line';
+                }
+                
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                this.chatHistory.push({ role, content });
+            }
+
+            generateResponse(userInput) {
+                const text = userInput.toLowerCase();
+                
+                if (this.containsKeywords(text, ['panic', 'anxiety', 'attack'])) {
+                    return this.guides.panic;
+                } else if (this.containsKeywords(text, ['stress', 'stressed', 'pressure', 'overwhelmed'])) {
+                    return this.guides.stress;
+                } else if (this.containsKeywords(text, ['depressed', 'sad', 'low', 'hopeless', 'empty'])) {
+                    return this.guides.depression;
+                } else if (this.containsKeywords(text, ['sleep', 'insomnia', 'tired', 'exhausted'])) {
+                    return this.guides.sleep;
+                } else {
+                    return this.getGeneralSupport(userInput);
+                }
+            }
+
+            containsKeywords(text, keywords) {
+                return keywords.some(keyword => text.includes(keyword));
+            }
+
+            getGeneralSupport(userInput) {
+                return `GENERAL WELLNESS GUIDANCE
+
+Thank you for reaching out. Here are some foundational strategies:
+
+Immediate Steps:
+• Take three deep breaths to center yourself
+• Acknowledge that seeking help is a positive step
+• Consider what specific support you need right now
+
+Self-Assessment Questions:
+• What is your primary concern today?
+• How long have you been experiencing this?
+• What coping strategies have you tried before?
+• Do you have a support system available?
+
+Recommended Actions:
+• Practice daily self-care routines
+• Maintain regular sleep and eating patterns
+• Stay connected with supportive people
+• Consider professional counseling if symptoms persist
+
+For more specific guidance, try using keywords like "stress," "anxiety," "depression," or "sleep" in your next message.
+
+Remember: This guidance supplements but does not replace professional mental health care.`;
+            }
+
+            logMood() {
+                const moodValue = parseInt(document.getElementById('moodSlider').value);
+                const timestamp = new Date();
+                
+                // Clear previous moods (matching original behavior)
+                this.moods = [];
+                this.moods.push({
+                    date: timestamp.toLocaleString(),
+                    mood: moodValue,
+                    timestamp: timestamp.getTime()
+                });
+                
+                this.updateMoodChart();
+            }
+
+            updateMoodChart() {
+                const chart = document.getElementById('moodChart');
+                
+                if (this.moods.length === 0) {
+                    chart.innerHTML = 'Mood tracking data will appear here after logging an entry.';
+                    return;
+                }
+                
+                const latest = this.moods[this.moods.length - 1];
+                const moodDescriptions = [
+                    'Very Low - Consider reaching out for support',
+                    'Low - Focus on self-care activities', 
+                    'Neutral - Maintain current wellness practices',
+                    'Good - Continue positive momentum',
+                    'Very Good - Excellent mental state'
+                ];
+                
+                chart.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem; color: var(--primary-color);">
+                            Mood Level: ${latest.mood}/5
+                        </div>
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">
+                            ${moodDescriptions[latest.mood - 1]}
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                            Logged: ${latest.date}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleSection(elementId) {
+            const content = document.getElementById(elementId);
+            const trigger = content.previousElementSibling;
+            
+            content.classList.toggle('show');
+            
+            const isExpanded = content.classList.contains('show');
+            const arrow = isExpanded ? '↓' : '→';
+            trigger.innerHTML = trigger.innerHTML.replace(/[→↓]/, arrow);
+        }
+
+        // Initialize application
+        const app = new MentalHealthApp();
+
+        // Expose methods to global scope for onclick handlers
+        function getAdvice() { app.getAdvice(); }
+        function logMood() { app.logMood(); }
+        function updateMoodDisplay() { app.updateMoodDisplay(); }
+    </script>
+</body>
+</html>
