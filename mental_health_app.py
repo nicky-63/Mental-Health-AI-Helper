@@ -28,15 +28,24 @@ except Exception as e:
     st.stop()
 
 # --------------------------------------------------------
-# Load model (use gpt2-medium for fallback responses)
+# Load model (use smaller distilgpt2 for Streamlit Cloud)
 # --------------------------------------------------------
-try:
-    generator = pipeline('text-generation', model='gpt2-medium', cache_dir=cache_dir)
-    logger.info("Successfully loaded gpt2-medium model")
-except Exception as e:
-    logger.error(f"Model loading failed: {e}")
-    st.error(f"Error loading model: {e}. Please try refreshing or contact support.")
-    st.stop()
+@st.cache_resource
+def load_model():
+    try:
+        gen = pipeline(
+            'text-generation',
+            model='distilgpt2',   # ✅ lightweight model
+            cache_dir=cache_dir
+        )
+        logger.info("Successfully loaded distilgpt2 model")
+        return gen
+    except Exception as e:
+        logger.error(f"Model loading failed: {e}")
+        st.error(f"Error loading model: {e}. Please try refreshing or contact support.")
+        st.stop()
+
+generator = load_model()
 
 # --------------------------------------------------------
 # Topic-specific guides
@@ -112,11 +121,10 @@ def generate_response(user_input):
         try:
             response = generator(
                 prompt,
-                max_length=250,
+                max_length=200,
                 num_return_sequences=1,
-                temperature=0.85,
+                temperature=0.8,
                 top_p=0.9,
-                no_repeat_ngram_size=3,
                 pad_token_id=generator.tokenizer.eos_token_id
             )[0]['generated_text']
             return response.replace(prompt, "").strip()
@@ -131,24 +139,23 @@ st.title("🧠 Mental Health Helper")
 st.write("A safe space to get advice, therapy tips, panic attack help, and track your mood. Not a replacement for therapy.")
 
 # --------------------------
-# Feature 1: Chatbot (always fresh)
+# Feature 1: Chatbot
 # --------------------------
 st.subheader("💬 Chat for Advice")
 user_input = st.text_input("What’s on your mind? (e.g., 'I'm stressed'):")
 
 if st.button("Get Advice") and user_input:
-    # clear previous chat automatically
-    st.session_state['messages'] = []
+    st.session_state['messages'] = []  # reset each time
     st.session_state.messages.append({"role": "user", "content": user_input})
     ai_response = generate_response(user_input)
     st.session_state.messages.append({"role": "ai", "content": ai_response})
 
     for message in st.session_state.messages:
         role = "You" if message["role"] == "user" else "AI"
-        st.markdown(f"{role}:** {message['content']}")
+        st.markdown(f"{role}: **{message['content']}**")
 
 # --------------------------
-# Feature 2: Therapy Tips (general, always available)
+# Feature 2: Therapy Tips
 # --------------------------
 st.subheader("🌱 General Therapy & Self-Help Options")
 with st.expander("Click to view general therapy practices"):
@@ -160,14 +167,13 @@ with st.expander("Click to view general therapy practices"):
     """)
 
 # --------------------------
-# Feature 3: Mood Tracking (fresh each time)
+# Feature 3: Mood Tracking
 # --------------------------
 st.subheader("📊 Track Your Mood")
 mood = st.slider("How’s your mood today? (1 = low, 5 = high)", 1, 5, 3)
 
 if st.button("Log Mood"):
-    # clear old moods each time
-    st.session_state['moods'] = []
+    st.session_state['moods'] = []  # reset each time
     st.session_state.moods.append({
         'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
         'mood': mood
@@ -179,4 +185,5 @@ if 'moods' in st.session_state and st.session_state.moods:
     df['date'] = pd.to_datetime(df['date'])
     st.line_chart(df.set_index('date')['mood'])
 
-st.write("Prototype v11.0: Topic-specific solutions with auto-clearing history.")
+st.write("Prototype v12.0: Runs on Streamlit Cloud with lightweight AI model.")
+
