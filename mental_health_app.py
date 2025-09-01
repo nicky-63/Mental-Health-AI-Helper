@@ -1,538 +1,182 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 Mental Health Helper</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+import os
+import streamlit as st
+from transformers import pipeline
+from datetime import datetime
+import logging
+import pandas as pd
 
-        body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            background: linear-gradient(135deg, #4a6b4d 0%, #3a5a3d 100%);
-            color: #f4f0e8;
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+# --------------------------------------------------------
+# Logging setup
+# --------------------------------------------------------
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(_name_)
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+# --------------------------------------------------------
+# Hugging Face cache setup
+# --------------------------------------------------------
+cache_dir = "/tmp/hf_cache"
+os.environ["TRANSFORMERS_CACHE"] = cache_dir
+os.environ["HF_HOME"] = cache_dir
+os.environ["HUGGINGFACE_HUB_CACHE"] = cache_dir
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            background: rgba(185, 142, 85, 0.25);
-            padding: 30px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(185, 142, 85, 0.35);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        }
+try:
+    os.makedirs(cache_dir, exist_ok=True)
+    logger.info(f"Created cache directory: {cache_dir}")
+except Exception as e:
+    logger.error(f"Cache directory error: {e}")
+    st.error(f"Cannot create cache directory: {e}. Please try refreshing or contact support.")
+    st.stop()
 
-        .header h1 {
-            font-size: 2.5em;
-            color: #e8d098;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
+# --------------------------------------------------------
+# Load model (use gpt2-medium for fallback responses)
+# --------------------------------------------------------
+try:
+    generator = pipeline('text-generation', model='gpt2-medium', cache_dir=cache_dir)
+    logger.info("Successfully loaded gpt2-medium model")
+except Exception as e:
+    logger.error(f"Model loading failed: {e}")
+    st.error(f"Error loading model: {e}. Please try refreshing or contact support.")
+    st.stop()
 
-        .header p {
-            font-size: 1.1em;
-            color: #d4c5a8;
-            font-style: italic;
-        }
-
-        .section {
-            background: rgba(85, 115, 88, 0.4);
-            margin-bottom: 30px;
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid rgba(185, 142, 85, 0.25);
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-        }
-
-        .section:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .section h2 {
-            color: #e8d098;
-            margin-bottom: 20px;
-            font-size: 1.4em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .chat-section {
-            background: rgba(70, 95, 73, 0.5);
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #d4c5a8;
-            font-weight: bold;
-        }
-
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(58, 90, 61, 0.7);
-            border: 2px solid rgba(185, 142, 85, 0.35);
-            border-radius: 10px;
-            color: #f4f0e8;
-            font-size: 1em;
-            font-family: inherit;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"]:focus, textarea:focus {
-            outline: none;
-            border-color: #e8d098;
-            box-shadow: 0 0 15px rgba(232, 208, 152, 0.3);
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #b58e55 0%, #8f6f3d 100%);
-            color: #f4f0e8;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn:hover {
-            background: linear-gradient(135deg, #c8a368 0%, #a0824a 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .messages {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(58, 90, 61, 0.4);
-            border-radius: 10px;
-            border: 1px solid rgba(185, 142, 85, 0.25);
-        }
-
-        .message {
-            margin-bottom: 15px;
-            padding: 12px 16px;
-            border-radius: 10px;
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        .message.user {
-            background: rgba(185, 142, 85, 0.35);
-            margin-left: 20px;
-            border-left: 4px solid #e8d098;
-        }
-
-        .message.ai {
-            background: rgba(85, 115, 88, 0.5);
-            margin-right: 20px;
-            border-left: 4px solid #9bb39e;
-        }
-
-        .message-role {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #e8d098;
-        }
-
-        .expandable {
-            background: rgba(58, 90, 61, 0.3);
-            border: 1px solid rgba(185, 142, 85, 0.25);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .expandable-header {
-            padding: 15px;
-            background: rgba(185, 142, 85, 0.25);
-            cursor: pointer;
-            font-weight: bold;
-            color: #e8d098;
-            transition: all 0.3s ease;
-        }
-
-        .expandable-header:hover {
-            background: rgba(185, 142, 85, 0.35);
-        }
-
-        .expandable-content {
-            display: none;
-            padding: 20px;
-            background: rgba(58, 90, 61, 0.2);
-        }
-
-        .expandable-content.show {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        .slider-container {
-            margin: 20px 0;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: rgba(58, 90, 61, 0.7);
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #e8d098;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .mood-display {
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #e8d098;
-            margin-top: 10px;
-        }
-
-        .mood-chart {
-            width: 100%;
-            height: 200px;
-            background: rgba(58, 90, 61, 0.4);
-            border-radius: 10px;
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #d4c5a8;
-            font-style: italic;
-        }
-
-        .crisis-resources {
-            background: rgba(185, 142, 85, 0.25);
-            border-left: 4px solid #e8d098;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .crisis-resources h3 {
-            color: #e8d098;
-            margin-bottom: 15px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: #a8997e;
-            font-style: italic;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; max-height: 0; }
-            to { opacity: 1; max-height: 500px; }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .section {
-                padding: 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🧠 Mental Health Helper</h1>
-            <p>A safe space to get advice, therapy tips, panic attack help, and track your mood. Not a replacement for therapy.</p>
-        </div>
-
-        <!-- Chat Section -->
-        <div class="section chat-section">
-            <h2>💬 Chat for Advice</h2>
-            <div class="input-group">
-                <label for="userInput">What's on your mind? (e.g., 'I'm stressed'):</label>
-                <input type="text" id="userInput" placeholder="Share your thoughts or concerns..." />
-            </div>
-            <button class="btn" onclick="getAdvice()">Get Advice</button>
-            <div id="messages" class="messages" style="display: none;"></div>
-        </div>
-
-        <!-- Therapy Tips Section -->
-        <div class="section">
-            <h2>🌱 General Therapy & Self-Help Options</h2>
-            <div class="expandable">
-                <div class="expandable-header" onclick="toggleExpander(this)">
-                    Click to view general therapy practices ▼
-                </div>
-                <div class="expandable-content">
-                    <h3 style="color: #e8d098; margin-bottom: 15px;">Evidence-Based Therapeutic Techniques</h3>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: #d4c5a8; margin-bottom: 10px;">🧠 Cognitive Behavioral Techniques</h4>
-                        <p><strong>• Thought challenging:</strong> Question negative automatic thoughts</p>
-                        <p><strong>• Behavioral activation:</strong> Schedule meaningful activities daily</p>
-                        <p><strong>• Problem-solving:</strong> Break challenges into manageable steps</p>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: #d4c5a8; margin-bottom: 10px;">🧘 Mindfulness & Relaxation</h4>
-                        <p><strong>• Progressive muscle relaxation:</strong> Tense and release muscle groups</p>
-                        <p><strong>• Mindful breathing:</strong> Focus on breath for 5-10 minutes daily</p>
-                        <p><strong>• Grounding techniques:</strong> 5-4-3-2-1 sensory method</p>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: #d4c5a8; margin-bottom: 10px;">💚 Self-Care Strategies</h4>
-                        <p><strong>• Sleep hygiene:</strong> Consistent sleep schedule and bedtime routine</p>
-                        <p><strong>• Physical activity:</strong> Regular movement to boost mood and energy</p>
-                        <p><strong>• Social connection:</strong> Maintain relationships and seek support</p>
-                        <p><strong>• Journaling:</strong> Track thoughts, feelings, and patterns</p>
-                    </div>
-
-                    <div style="margin-bottom: 10px;">
-                        <h4 style="color: #d4c5a8; margin-bottom: 10px;">🆘 Crisis Management</h4>
-                        <p><strong>• Safety planning:</strong> Identify warning signs and coping strategies</p>
-                        <p><strong>• Support network:</strong> Have emergency contacts readily available</p>
-                        <p><strong>• Professional resources:</strong> Know when to seek immediate help</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mood Tracking Section -->
-        <div class="section">
-            <h2>📊 Track Your Mood</h2>
-            <div class="slider-container">
-                <label for="moodSlider">How's your mood today? (1 = low, 5 = high)</label>
-                <input type="range" id="moodSlider" min="1" max="5" value="3" oninput="updateMoodDisplay()" />
-                <div id="moodDisplay" class="mood-display">Mood: 3/5</div>
-            </div>
-            <button class="btn" onclick="logMood()">Log Mood</button>
-            <div id="moodChart" class="mood-chart" style="display: none;">
-                Mood tracking visualization would appear here
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Prototype v11.0: Topic-specific solutions with auto-clearing history.</p>
-        </div>
-    </div>
-
-    <script>
-        // Global variables
-        let messages = [];
-        let moods = [];
-
-        // Topic-specific guides
-        const guides = {
-            stress: `😌 *Coping with Stress*
+# --------------------------------------------------------
+# Topic-specific guides
+# --------------------------------------------------------
+stress_guide = """
+😌 *Coping with Stress*
 
 1. Take short breaks every 1–2 hours of work/study.  
 2. Practice deep breathing (inhale 4s, exhale 6s).  
 3. Break big tasks into smaller ones.  
 4. Write down your worries, then list 1 small action for each.  
-5. Try light exercise (walk, stretch, yoga).`,
+5. Try light exercise (walk, stretch, yoga).  
+"""
 
-            panic: `😮‍💨 *Panic/Anxiety Attack Help*
+panic_guide = """
+😮‍💨 *Panic/Anxiety Attack Help*
 
 1. Remind yourself: "This will pass."  
 2. Try 4-7-8 breathing (inhale 4s, hold 7s, exhale 8s).  
 3. Use grounding: 5 things you see, 4 touch, 3 hear, 2 smell, 1 taste.  
-4. Splash cold water on your face.`,
+4. Splash cold water on your face.  
+"""
 
-            depression: `🌧 *When Feeling Low/Depressed*
+depression_guide = """
+🌧 *When Feeling Low/Depressed*
 
 1. Keep a daily routine (wake/sleep times).  
 2. Schedule at least one enjoyable activity daily.  
 3. Reach out to a friend or family member, even briefly.  
 4. Avoid isolation—spend time in sunlight/nature.  
-5. Journal your feelings, note small positives each day.`,
+5. Journal your feelings, note small positives each day.  
+"""
 
-            sleep: `🌙 *Better Sleep Tips*
+sleep_guide = """
+🌙 *Better Sleep Tips*
 
 1. Keep a fixed bedtime and wake-up time.  
 2. Avoid caffeine or phone screens 2 hours before bed.  
 3. Use relaxation routines: soft music, reading, or meditation.  
-4. Keep your room dark, cool, and quiet.`
-        };
+4. Keep your room dark, cool, and quiet.  
+"""
 
-        const resources = `📞 *Crisis Resources (If You're Struggling)*
+resources = """
+📞 *Crisis Resources (If You’re Struggling)*
 
 - 988 Suicide & Crisis Lifeline: Call/text 988 (24/7, free, confidential).  
 - Crisis Text Line: Text HOME to 741741 (free, anonymous, 24/7).  
 - Soluna App: Free for ages 13–25 (iOS/Android).  
 
-⚠ Reminder: This app is not medical advice—please consult a licensed professional if you're in crisis.`;
+⚠ Reminder: This app is not medical advice—please consult a licensed professional if you’re in crisis.
+"""
 
-        function generateResponse(userInput) {
-            const text = userInput.toLowerCase();
-            
-            if (text.includes('panic') || text.includes('anxiety') || text.includes('attack')) {
-                return guides.panic + "\n\n" + resources;
-            } else if (text.includes('stress') || text.includes('stressed') || text.includes('pressure')) {
-                return guides.stress;
-            } else if (text.includes('depressed') || text.includes('sad') || text.includes('low') || text.includes('hopeless')) {
-                return guides.depression + "\n\n" + resources;
-            } else if (text.includes('sleep') || text.includes('insomnia') || text.includes('tired')) {
-                return guides.sleep;
-            } else {
-                // Fallback response
-                return `Thank you for sharing that with me. Here are some general suggestions that might help:
+# --------------------------------------------------------
+# AI Response generator with topic-specific guides
+# --------------------------------------------------------
+def generate_response(user_input):
+    text = user_input.lower()
+    
+    if any(word in text for word in ["panic", "anxiety", "attack"]):
+        return panic_guide + "\n\n" + resources
+    elif any(word in text for word in ["stress", "stressed", "pressure"]):
+        return stress_guide
+    elif any(word in text for word in ["depressed", "sad", "low", "hopeless"]):
+        return depression_guide + "\n\n" + resources
+    elif any(word in text for word in ["sleep", "insomnia", "tired"]):
+        return sleep_guide
+    else:
+        # fallback: AI-generated advice
+        prompt = (
+            f"You are a supportive AI wellness guide. The user said: '{user_input}'.\n"
+            f"Give practical advice in 3–5 clear steps. Keep it warm and useful."
+        )
+        try:
+            response = generator(
+                prompt,
+                max_length=250,
+                num_return_sequences=1,
+                temperature=0.85,
+                top_p=0.9,
+                no_repeat_ngram_size=3,
+                pad_token_id=generator.tokenizer.eos_token_id
+            )[0]['generated_text']
+            return response.replace(prompt, "").strip()
+        except Exception as e:
+            logger.error(f"Error generating response: {e}")
+            return "Sorry, I couldn’t generate advice right now. Try again."
 
-1. Take a moment to breathe deeply and ground yourself in the present moment.
-2. Remember that difficult feelings are temporary and will pass.
-3. Consider reaching out to someone you trust to talk about what you're experiencing.
-4. Engage in a small self-care activity that brings you comfort.
-5. If these feelings persist, don't hesitate to seek professional support.
+# --------------------------------------------------------
+# Streamlit App
+# --------------------------------------------------------
+st.title("🧠 Mental Health Helper")
+st.write("A safe space to get advice, therapy tips, panic attack help, and track your mood. Not a replacement for therapy.")
 
-Remember, you're taking a positive step by seeking help and guidance. 🌟`;
-            }
-        }
+# --------------------------
+# Feature 1: Chatbot (always fresh)
+# --------------------------
+st.subheader("💬 Chat for Advice")
+user_input = st.text_input("What’s on your mind? (e.g., 'I'm stressed'):")
 
-        function getAdvice() {
-            const userInput = document.getElementById('userInput').value.trim();
-            if (!userInput) return;
+if st.button("Get Advice") and user_input:
+    # clear previous chat automatically
+    st.session_state['messages'] = []
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    ai_response = generate_response(user_input)
+    st.session_state.messages.append({"role": "ai", "content": ai_response})
 
-            // Clear previous messages (auto-clearing feature)
-            messages = [];
-            
-            // Add user message
-            messages.push({ role: 'user', content: userInput });
-            
-            // Generate AI response
-            const aiResponse = generateResponse(userInput);
-            messages.push({ role: 'ai', content: aiResponse });
+    for message in st.session_state.messages:
+        role = "You" if message["role"] == "user" else "AI"
+        st.markdown(f"{role}:** {message['content']}")
 
-            displayMessages();
-            document.getElementById('userInput').value = '';
-        }
+# --------------------------
+# Feature 2: Therapy Tips (general, always available)
+# --------------------------
+st.subheader("🌱 General Therapy & Self-Help Options")
+with st.expander("Click to view general therapy practices"):
+    st.write("""
+    - 📝 Journaling: Helps track mood triggers and progress.  
+    - 🧘 Mindfulness: Try 5–10 minutes daily meditation or mindful walking.  
+    - 🎶 Behavioral Activation: Schedule enjoyable small activities daily.  
+    - 👥 Group Therapy: Talking with others reduces isolation.  
+    """)
 
-        function displayMessages() {
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';
-            messagesDiv.style.display = 'block';
+# --------------------------
+# Feature 3: Mood Tracking (fresh each time)
+# --------------------------
+st.subheader("📊 Track Your Mood")
+mood = st.slider("How’s your mood today? (1 = low, 5 = high)", 1, 5, 3)
 
-            messages.forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${message.role}`;
-                
-                const roleDiv = document.createElement('div');
-                roleDiv.className = 'message-role';
-                roleDiv.textContent = message.role === 'user' ? 'You:' : 'AI:';
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.innerHTML = message.content.replace(/\n/g, '<br>');
-                
-                messageDiv.appendChild(roleDiv);
-                messageDiv.appendChild(contentDiv);
-                messagesDiv.appendChild(messageDiv);
-            });
+if st.button("Log Mood"):
+    # clear old moods each time
+    st.session_state['moods'] = []
+    st.session_state.moods.append({
+        'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'mood': mood
+    })
 
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
+if 'moods' in st.session_state and st.session_state.moods:
+    st.write("Your Mood (Latest Log Only):")
+    df = pd.DataFrame(st.session_state.moods)
+    df['date'] = pd.to_datetime(df['date'])
+    st.line_chart(df.set_index('date')['mood'])
 
-        function updateMoodDisplay() {
-            const slider = document.getElementById('moodSlider');
-            const display = document.getElementById('moodDisplay');
-            const moodLabels = ['😢 Very Low', '😔 Low', '😐 Neutral', '🙂 Good', '😊 Great'];
-            display.textContent = `Mood: ${slider.value}/5 - ${moodLabels[slider.value - 1]}`;
-        }
-
-        function logMood() {
-            const moodValue = parseInt(document.getElementById('moodSlider').value);
-            const now = new Date();
-            
-            // Clear old moods (auto-clearing feature)
-            moods = [];
-            
-            moods.push({
-                date: now.toLocaleString(),
-                mood: moodValue
-            });
-
-            const chartDiv = document.getElementById('moodChart');
-            chartDiv.style.display = 'block';
-            chartDiv.innerHTML = `
-                <div style="text-align: center;">
-                    <h3 style="color: #e8d098; margin-bottom: 10px;">Your Latest Mood Log</h3>
-                    <p><strong>Date:</strong> ${moods[0].date}</p>
-                    <p><strong>Mood:</strong> ${moods[0].mood}/5</p>
-                    <div style="margin-top: 15px; font-size: 2em;">
-                        ${['😢', '😔', '😐', '🙂', '😊'][moods[0].mood - 1]}
-                    </div>
-                </div>
-            `;
-        }
-
-        function toggleExpander(header) {
-            const content = header.nextElementSibling;
-            const arrow = header.querySelector('span') || header;
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                header.innerHTML = header.innerHTML.replace('▲', '▼');
-            } else {
-                content.classList.add('show');
-                header.innerHTML = header.innerHTML.replace('▼', '▲');
-            }
-        }
-
-        // Allow Enter key to submit
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                getAdvice();
-            }
-        });
-
-        // Initialize mood display
-        updateMoodDisplay();
-    </script>
-</body>
-</html>
+st.write("Prototype v11.0: Topic-specific solutions with auto-clearing history.")
