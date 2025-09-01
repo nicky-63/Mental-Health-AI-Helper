@@ -405,7 +405,7 @@
 
         const resources = `📞 *Crisis Resources (If You're Struggling)*
 
-- 988 Suicide & Crisis Lifeline: Call/text 14416 (24/7, free, confidential).  
+- 988 Suicide & Crisis Lifeline: Call/text 988 (24/7, free, confidential).  
 - Crisis Text Line: Text HOME to 741741 (free, anonymous, 24/7).  
 - Soluna App: Free for ages 13–25 (iOS/Android).  
 
