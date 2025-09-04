@@ -1,563 +1,333 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Mental Health Helper</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mental Health Helper</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #faf6ff;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
 
-        body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            background: #ffffff;
-            color: #1e293b;
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+    }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 2px solid #b388ff;
+      border-radius: 12px;
+      background: #fff;
+    }
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 20px;
-            border: 2px solid #8b5cf6;
-            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
-        }
+    .header h1 {
+      font-size: 2.2em;
+      margin: 0;
+      color: #7e57c2;
+    }
 
-        .header h1 {
-            font-size: 2.5em;
-            color: #8b5cf6;
-            margin-bottom: 10px;
-            text-shadow: none;
-        }
+    .header p {
+      font-style: italic;
+      font-size: 0.95em;
+      color: #555;
+    }
 
-        .header p {
-            font-size: 1.1em;
-            color: #64748b;
-            font-style: italic;
-        }
+    .section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #e0d7ff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
 
-        .section {
-            background: #ffffff;
-            margin-bottom: 30px;
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
+    .section h2 {
+      margin-top: 0;
+      font-size: 1.3em;
+      color: #6a1b9a;
+    }
 
-        .section:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.1);
-            border-color: #c4b5fd;
-        }
+    .input-group {
+      margin-bottom: 15px;
+    }
 
-        .section h2 {
-            color: #8b5cf6;
-            margin-bottom: 20px;
-            font-size: 1.4em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
 
-        .chat-section {
-            background: #ffffff;
-            border: 2px solid #c4b5fd;
-        }
+    input[type="text"], input[type="range"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1c4e9;
+      outline: none;
+      font-size: 1em;
+    }
 
-        .input-group {
-            margin-bottom: 20px;
-        }
+    .btn {
+      background: linear-gradient(135deg, #7e57c2, #9575cd);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 25px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: 0.2s;
+    }
 
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #475569;
-            font-weight: bold;
-        }
+    .btn:hover {
+      background: linear-gradient(135deg, #673ab7, #7e57c2);
+    }
 
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: #ffffff;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            color: #1e293b;
-            font-size: 1em;
-            font-family: inherit;
-            transition: all 0.3s ease;
-        }
+    .messages {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #fafafa;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e0d7ff;
+    }
 
-        input[type="text"]:focus, textarea:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-        }
+    .message {
+      margin-bottom: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      line-height: 1.4;
+    }
 
-        .btn {
-            background: #8b5cf6;
-            color: #ffffff;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
-        }
+    .message.user {
+      background: #ede7f6;
+      border-left: 4px solid #7e57c2;
+    }
 
-        .btn:hover {
-            background: #7c3aed;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
-        }
+    .message.ai {
+      background: #f3f0fa;
+      border-left: 4px solid #ab47bc;
+    }
 
-        .btn:active {
-            transform: translateY(0);
-        }
+    .message-role {
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #4a148c;
+    }
 
-        .messages {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-        }
+    .expander {
+      cursor: pointer;
+      font-weight: bold;
+      color: #6a1b9a;
+      margin: 10px 0;
+    }
 
-        .message {
-            margin-bottom: 15px;
-            padding: 12px 16px;
-            border-radius: 10px;
-            animation: fadeIn 0.5s ease-in;
-        }
+    .expander-content {
+      display: none;
+      margin-top: 10px;
+      background: #f8f6ff;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1c4e9;
+    }
 
-        .message.user {
-            background: #ffffff;
-            margin-left: 20px;
-            border-left: 4px solid #8b5cf6;
-            border: 1px solid #e2e8f0;
-        }
-
-        .message.ai {
-            background: #f1f5f9;
-            margin-right: 20px;
-            border-left: 4px solid #8b5cf6;
-        }
-
-        .message-role {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #8b5cf6;
-        }
-
-        .expandable {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .expandable-header {
-            padding: 15px;
-            background: #f8fafc;
-            cursor: pointer;
-            font-weight: bold;
-            color: #8b5cf6;
-            transition: all 0.3s ease;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .expandable-header:hover {
-            background: #f1f5f9;
-        }
-
-        .expandable-content {
-            display: none;
-            padding: 20px;
-            background: #ffffff;
-        }
-
-        .expandable-content.show {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        .slider-container {
-            margin: 20px 0;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #e2e8f0;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #8b5cf6;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
-        }
-
-        .mood-display {
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #8b5cf6;
-            margin-top: 10px;
-        }
-
-        .mood-chart {
-            width: 100%;
-            height: 200px;
-            background: #f8fafc;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #64748b;
-            font-style: italic;
-            border: 1px solid #e2e8f0;
-        }
-
-        .crisis-resources {
-            background: #fef7ff;
-            border-left: 4px solid #8b5cf6;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border: 1px solid #e879f9;
-        }
-
-        .crisis-resources h3 {
-            color: #8b5cf6;
-            margin-bottom: 15px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: #64748b;
-            font-style: italic;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; max-height: 0; }
-            to { opacity: 1; max-height: 500px; }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .section {
-                padding: 20px;
-            }
-        }
-    </style>
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.85em;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🧠 Mental Health Helper</h1>
-            <p>A safe space to get advice, therapy tips, panic attack help, and track your mood. Not a replacement for therapy.</p>
-        </div>
-
-        <!-- Chat Section -->
-        <div class="section chat-section">
-            <h2>💬 Chat for Advice</h2>
-            <div class="input-group">
-                <label for="userInput">What's on your mind? (e.g., 'I'm stressed'):</label>
-                <input type="text" id="userInput" placeholder="Share your thoughts or concerns..." />
-            </div>
-            <button class="btn" onclick="getAdvice()">Get Advice</button>
-            <div id="messages" class="messages" style="display: none;"></div>
-        </div>
-
-        <!-- Therapy Tips Section -->
-        <div class="section">
-            <h2>🌱 General Therapy & Self-Help Options</h2>
-            <div class="expandable">
-                <div class="expandable-header" onclick="toggleExpander(this)">
-                    Click to view general therapy practices ▼
-                </div>
-                <div class="expandable-content">
-                    <h3 style="color: #8b5cf6; margin-bottom: 15px;">Evidence-Based Therapeutic Techniques</h3>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: #64748b; margin-bottom: 10px;">🧠 Cognitive Behavioral Techniques</h4>
-                        <p><strong>• Thought challenging:</strong> Question negative automatic thoughts</p>
-                        <p><strong>• Behavioral activation:</strong> Schedule meaningful activities daily</p>
-                        <p><strong>• Problem-solving:</strong> Break challenges into manageable steps</p>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: #64748b; margin-bottom: 10px;">🧘 Mindfulness & Relaxation</h4>
-                        <p><strong>• Progressive muscle relaxation:</strong> Tense and release muscle groups</p>
-                        <p><strong>• Mindful breathing:</strong> Focus on breath for 5-10 minutes daily</p>
-                        <p><strong>• Grounding techniques:</strong> 5-4-3-2-1 sensory method</p>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: #64748b; margin-bottom: 10px;">💚 Self-Care Strategies</h4>
-                        <p><strong>• Sleep hygiene:</strong> Consistent sleep schedule and bedtime routine</p>
-                        <p><strong>• Physical activity:</strong> Regular movement to boost mood and energy</p>
-                        <p><strong>• Social connection:</strong> Maintain relationships and seek support</p>
-                        <p><strong>• Journaling:</strong> Track thoughts, feelings, and patterns</p>
-                    </div>
-
-                    <div style="margin-bottom: 10px;">
-                        <h4 style="color: #64748b; margin-bottom: 10px;">🆘 Crisis Management</h4>
-                        <p><strong>• Safety planning:</strong> Identify warning signs and coping strategies</p>
-                        <p><strong>• Support network:</strong> Have emergency contacts readily available</p>
-                        <p><strong>• Professional resources:</strong> Know when to seek immediate help</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mood Tracking Section -->
-        <div class="section">
-            <h2>📊 Track Your Mood</h2>
-            <div class="slider-container">
-                <label for="moodSlider">How's your mood today? (1 = low, 5 = high)</label>
-                <input type="range" id="moodSlider" min="1" max="5" value="3" oninput="updateMoodDisplay()" />
-                <div id="moodDisplay" class="mood-display">Mood: 3/5</div>
-            </div>
-            <button class="btn" onclick="logMood()">Log Mood</button>
-            <div id="moodChart" class="mood-chart" style="display: none;">
-                Mood tracking visualization would appear here
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Prototype v11.0: Topic-specific solutions with auto-clearing history.</p>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>🧠 Mental Health Helper</h1>
+      <p>A safe space to get advice, therapy tips, panic attack help, and track your mood. Not a replacement for therapy.</p>
     </div>
 
+    <!-- Chat Section -->
+    <div class="section chat-section">
+      <h2>💬 Chat for Advice</h2>
+      <div class="input-group">
+        <label for="userInput">What's on your mind? (e.g., 'I'm stressed'):</label>
+        <input type="text" id="userInput" placeholder="Share your thoughts or concerns..." />
+      </div>
+      <button class="btn" onclick="getAdvice()">Get Advice</button>
+      <div id="messages" class="messages" style="display: none;"></div>
+    </div>
+
+    <!-- Therapy Tips Section -->
+    <div class="section">
+      <h2>🌱 General Therapy & Self-Help Options</h2>
+      <div class="expander" onclick="toggleExpander()">Click to view general therapy practices ▼</div>
+      <div id="expanderContent" class="expander-content">
+        <ul>
+          <li>Practice daily mindfulness or meditation for at least 5 minutes.</li>
+          <li>Maintain a balanced sleep schedule to stabilize mood.</li>
+          <li>Engage in light physical activity like stretching or walking.</li>
+          <li>Write in a gratitude journal before bed.</li>
+          <li>Limit caffeine and alcohol to reduce anxiety.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Mood Tracking Section -->
+    <div class="section">
+      <h2>📊 Track Your Mood</h2>
+      <label for="moodRange">How's your mood today? (1 = low, 5 = high)</label>
+      <input type="range" id="moodRange" min="1" max="5" value="3" oninput="updateMoodLabel(this.value)" />
+      <p id="moodLabel">Mood: 3/5 - 😐 Neutral</p>
+      <button class="btn" onclick="logMood()">Log Mood</button>
+      <div id="moodLogs" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="footer">
+      <p>Prototype v13.0: Gemini AI + Fallback + Therapy + Mood Tracker.</p>
+    </div>
+  </div>
+
 <script>
-    // Global variables
-    let messages = [];
-    let moods = [];
+  let messages = [];
+  let moods = [];
 
-    // Topic-specific guides
-    const guides = {
-        stress: `😌 *Coping with Stress*
+  // --- Guides & Crisis Resources ---
+  const guides = {
+    stress: Stress can feel overwhelming, but it can be managed step by step. Try focusing on deep breathing, breaking tasks into smaller pieces, and taking intentional breaks. Physical exercise and even short walks can help clear your mind and reduce tension.,
+    panic: During a panic attack, it’s important to remind yourself that what you’re experiencing will pass. Slow your breathing, ground yourself by focusing on physical sensations, and try repeating calming phrases. Regular practice of relaxation techniques can also reduce future panic episodes.,
+    depression: Feeling low or depressed can be very heavy, and it’s okay to acknowledge that. Try expressing yourself through journaling or art, and don’t hesitate to talk to someone you trust. Remember that small steps like maintaining a routine, going outside for sunlight, or practicing self-compassion can make a difference.,
+    sleep: Healthy sleep plays a vital role in mental well-being. To improve sleep, create a calming bedtime routine, avoid screens 1 hour before bed, and keep your sleeping environment quiet and cool. Relaxation practices like meditation or gentle stretching can also prepare your mind for rest.
+  };
 
-1. Take short breaks every 1–2 hours of work/study.  
-2. Practice deep breathing (inhale 4s, exhale 6s).  
-3. Break big tasks into smaller ones.  
-4. Write down your worries, then list 1 small action for each.  
-5. Try light exercise (walk, stretch, yoga).`,
+  const resources = 📞 *Crisis Resources*\n- India: 9152987821 (Vandrevala Foundation Helpline)\n- International: Please search your local helpline number.;
 
-        panic: `😮‍💨 *Panic/Anxiety Attack Help*
+  // --- Fallback function ---
+  function generateResponse(userInput) {
+    const text = userInput.toLowerCase();
+    if (text.includes('panic') || text.includes('anxiety') || text.includes('attack')) {
+      return guides.panic + "\n\n" + resources;
+    } else if (text.includes('stress')) {
+      return guides.stress;
+    } else if (text.includes('depressed') || text.includes('sad') || text.includes('low')) {
+      return guides.depression + "\n\n" + resources;
+    } else if (text.includes('sleep') || text.includes('tired')) {
+      return guides.sleep;
+    } else {
+      return It sounds like you may be going through something challenging. A few general tips that often help include staying hydrated, moving your body gently, journaling your thoughts, and connecting with a trusted friend or relative. \n\n${resources};
+    }
+  }
 
-1. Remind yourself: "This will pass."  
-2. Try 4-7-8 breathing (inhale 4s, hold 7s, exhale 8s).  
-3. Use grounding: 5 things you see, 4 touch, 3 hear, 2 smell, 1 taste.  
-4. Splash cold water on your face.`,
+  // --- Gemini API Call ---
+  async function callGemini(prompt) {
+    const API_KEY = "YOUR_GEMINI_API_KEY"; // replace with your real API key
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + API_KEY;
 
-        depression: `🌧 *When Feeling Low/Depressed*
-
-1. Keep a daily routine (wake/sleep times).  
-2. Schedule at least one enjoyable activity daily.  
-3. Reach out to a friend or family member, even briefly.  
-4. Avoid isolation—spend time in sunlight/nature.  
-5. Journal your feelings, note small positives each day.`,
-
-        sleep: `🌙 *Better Sleep Tips*
-
-1. Keep a fixed bedtime and wake-up time.  
-2. Avoid caffeine or phone screens 2 hours before bed.  
-3. Use relaxation routines: soft music, reading, or meditation.  
-4. Keep your room dark, cool, and quiet.`
+    const body = {
+      contents: [
+        { role: "user", parts: [{ text: prompt }] }
+      ]
     };
 
-    const resources = `📞 *Crisis Resources (If You're Struggling)*
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
 
-- 988 Suicide & Crisis Lifeline: Call/text 14416 (24/7, free, confidential).  
-- Crisis Text Line: Text HOME to 741741 (free, anonymous, 24/7).  
-- Soluna App: Free for ages 13–25 (iOS/Android).  
+      if (!res.ok) throw new Error("Gemini request failed");
 
-⚠ Reminder: This app is not medical advice—please consult a licensed professional if you're in crisis.`;
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    } catch (err) {
+      console.warn("Gemini API error:", err);
+      return null;
+    }
+  }
 
-    // Local fallback generator
-    function generateResponse(userInput) {
-        const text = userInput.toLowerCase();
-        const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening'];
+  // --- Main Advice Function ---
+  async function getAdvice() {
+    const userInput = document.getElementById('userInput').value.trim();
+    if (!userInput) return;
 
-        if (greetings.some(greet => text === greet || text.startsWith(greet + ' ') || text.endsWith(' ' + greet) || text.includes(' ' + greet + ' '))) {
-            return `Hello! 👋 How can I support you today? Feel free to share what's on your mind.`;
-        }
+    document.getElementById('userInput').value = '';
 
-        if (text.includes('panic') || text.includes('anxiety') || text.includes('attack')) {
-            return guides.panic + "\n\n" + resources;
-        } else if (text.includes('stress') || text.includes('stressed') || text.includes('pressure')) {
-            return guides.stress;
-        } else if (text.includes('depressed') || text.includes('sad') || text.includes('low') || text.includes('hopeless')) {
-            return guides.depression + "\n\n" + resources;
-        } else if (text.includes('sleep') || text.includes('insomnia') || text.includes('tired')) {
-            return guides.sleep;
-        } else {
-            return `Thank you for sharing that with me. Here are some general suggestions that might help:
+    messages = [];
+    messages.push({ role: 'user', content: userInput });
 
-1. Take a moment to breathe deeply and ground yourself in the present moment.
-2. Remember that difficult feelings are temporary and will pass.
-3. Consider reaching out to someone you trust to talk about what you're experiencing.
-4. Engage in a small self-care activity that brings you comfort.
-5. If these feelings persist, don't hesitate to seek professional support.
+    let aiResponse = await callGemini(userInput);
 
-Remember, you're taking a positive step by seeking help and guidance. 🌟`;
-        }
+    if (!aiResponse) {
+      aiResponse = generateResponse(userInput);
     }
 
-    // Main advice function (tries backend first, then fallback)
-    async function getAdvice() {
-        const userInput = document.getElementById('userInput').value.trim();
-        if (!userInput) return;
+    messages.push({ role: 'ai', content: aiResponse });
 
-        messages = [];
-        messages.push({ role: 'user', content: userInput });
+    displayMessages();
+  }
 
-        try {
-            const res = await fetch("http://localhost:8502/api/respond", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: userInput })
-            });
+  // --- Display Chat ---
+  function displayMessages() {
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.innerHTML = '';
+    messagesDiv.style.display = 'block';
 
-            if (res.ok) {
-                const data = await res.json();
-                messages.push({ role: 'ai', content: data.response });
-            } else {
-                throw new Error("Backend error");
-            }
-        } catch (err) {
-            // Use fallback if backend fails
-            const aiResponse = generateResponse(userInput);
-            messages.push({ role: 'ai', content: aiResponse });
-        }
+    messages.forEach(message => {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = message ${message.role};
 
-        displayMessages();
-        document.getElementById('userInput').value = '';
-    }
+      const roleDiv = document.createElement('div');
+      roleDiv.className = 'message-role';
+      roleDiv.textContent = message.role === 'user' ? 'You:' : 'AI:';
 
-    // Display chat messages
-    function displayMessages() {
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = '';
-        messagesDiv.style.display = 'block';
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = message.content.replace(/\n/g, '<br>');
 
-        messages.forEach(message => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${message.role}`;
-
-            const roleDiv = document.createElement('div');
-            roleDiv.className = 'message-role';
-            roleDiv.textContent = message.role === 'user' ? 'You:' : 'AI:';
-
-            const contentDiv = document.createElement('div');
-            contentDiv.innerHTML = message.content.replace(/\n/g, '<br>');
-
-            messageDiv.appendChild(roleDiv);
-            messageDiv.appendChild(contentDiv);
-            messagesDiv.appendChild(messageDiv);
-        });
-
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    // Mood slider
-    function updateMoodDisplay() {
-        const slider = document.getElementById('moodSlider');
-        const display = document.getElementById('moodDisplay');
-        const moodLabels = ['😢 Very Low', '😔 Low', '😐 Neutral', '🙂 Good', '😊 Great'];
-        display.textContent = `Mood: ${slider.value}/5 - ${moodLabels[slider.value - 1]}`;
-    }
-
-    function logMood() {
-        const moodValue = parseInt(document.getElementById('moodSlider').value);
-        const now = new Date();
-
-        moods = [];
-        moods.push({
-            date: now.toLocaleString(),
-            mood: moodValue
-        });
-
-        const chartDiv = document.getElementById('moodChart');
-        chartDiv.style.display = 'block';
-        chartDiv.innerHTML = `
-            <div style="text-align: center;">
-                <h3 style="color: #8b5cf6; margin-bottom: 10px;">Your Latest Mood Log</h3>
-                <p><strong>Date:</strong> ${moods[0].date}</p>
-                <p><strong>Mood:</strong> ${moods[0].mood}/5</p>
-                <div style="margin-top: 15px; font-size: 2em;">
-                    ${['😢', '😔', '😐', '🙂', '😊'][moods[0].mood - 1]}
-                </div>
-            </div>
-        `;
-    }
-
-    // Expander toggle
-    function toggleExpander(header) {
-        const content = header.nextElementSibling;
-        const arrow = header.querySelector('span') || header;
-
-        if (content.classList.contains('show')) {
-            content.classList.remove('show');
-            header.innerHTML = header.innerHTML.replace('▲', '▼');
-        } else {
-            content.classList.add('show');
-            header.innerHTML = header.innerHTML.replace('▼', '▲');
-        }
-    }
-
-    // Enter key to send
-    document.getElementById('userInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            getAdvice();
-        }
+      messageDiv.appendChild(roleDiv);
+      messageDiv.appendChild(contentDiv);
+      messagesDiv.appendChild(messageDiv);
     });
 
-    // Initialize mood display
-    updateMoodDisplay();
-</script>
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
 
+  // --- Therapy Expander ---
+  function toggleExpander() {
+    const content = document.getElementById("expanderContent");
+    content.style.display = content.style.display === "block" ? "none" : "block";
+  }
+
+  // --- Mood Tracker ---
+  function updateMoodLabel(value) {
+    const moodText = ["😞 Very Low", "😔 Low", "😐 Neutral", "😊 Good", "😁 Very High"];
+    document.getElementById("moodLabel").textContent = Mood: ${value}/5 - ${moodText[value-1]};
+  }
+
+  function logMood() {
+    const moodValue = document.getElementById("moodRange").value;
+    const moodText = ["Very Low", "Low", "Neutral", "Good", "Very High"];
+    const date = new Date().toLocaleString();
+    moods.push({ value: moodValue, text: moodText[moodValue-1], date: date });
+
+    let logsHTML = "<h4>Logged Moods:</h4><ul>";
+    moods.forEach(m => {
+      logsHTML += <li>${m.date}: ${m.value}/5 - ${m.text}</li>;
+    });
+    logsHTML += "</ul>";
+    document.getElementById("moodLogs").innerHTML = logsHTML;
+  }
+
+  // --- Press Enter to Send ---
+  document.getElementById('userInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') getAdvice();
+  });
+</script>
 </body>
 </html>
-
