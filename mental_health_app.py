@@ -94,7 +94,11 @@ resources = """
 # --------------------------------------------------------
 def generate_response(user_input):
     text = user_input.lower()
-    
+
+    greetings = ["hi", "hello", "hey", "how are you", "how are you doing", "good morning", "good afternoon", "good evening"]
+    if any(greet in text for greet in greetings):
+        return "Hello! 😊 How can I support you today?"
+        
     if any(word in text for word in ["panic", "anxiety", "attack"]):
         return panic_guide + "\n\n" + resources
     elif any(word in text for word in ["stress", "stressed", "pressure"]):
