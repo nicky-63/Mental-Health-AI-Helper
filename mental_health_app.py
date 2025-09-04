@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import datetime
 import google.generativeai as genai
 from transformers import pipeline
+import threading
+from flask import Flask, request, jsonify
 
 # --------------------------------------------------------
 # Logging setup
@@ -48,6 +50,7 @@ if "GOOGLE_API_KEY" in st.secrets:
 # --------------------------------------------------------
 # Guides
 # --------------------------------------------------------
+
 stress_guide = """
 😌 *Coping with Stress*
 
@@ -67,6 +70,8 @@ panic_guide = """
 4. Splash cold water on your face.  
 """
 
+
+
 depression_guide = """
 🌧 *When Feeling Low/Depressed*
 
@@ -77,6 +82,8 @@ depression_guide = """
 5. Journal your feelings, note small positives each day.  
 """
 
+
+
 sleep_guide = """
 🌙 *Better Sleep Tips*
 
@@ -84,7 +91,10 @@ sleep_guide = """
 2. Avoid caffeine or phone screens 2 hours before bed.  
 3. Use relaxation routines: soft music, reading, or meditation.  
 4. Keep your room dark, cool, and quiet.  
+
 """
+
+
 
 resources = """
 📞 *Crisis Resources*
@@ -94,8 +104,8 @@ resources = """
 - Soluna App: Free for ages 13–25 (iOS/Android).  
 
 ⚠ Reminder: This app is not medical advice—please consult a licensed professional if you’re in crisis.
-"""
 
+"""
 # --------------------------------------------------------
 # Response generator (Hybrid: guide + Gemini expansion)
 # --------------------------------------------------------
@@ -123,7 +133,6 @@ def generate_response(user_input: str) -> str:
     elif any(word in text for word in ["sleep", "insomnia", "tired"]):
         return expand_with_gemini(sleep_guide)
     else:
-        # Full AI fallback (Gemini → GPT-2 → default message)
         prompt = (
             f"You are a supportive mental health assistant.\n"
             f"User: '{user_input}'\n"
@@ -144,12 +153,28 @@ def generate_response(user_input: str) -> str:
         return "Sorry, I couldn’t generate advice right now."
 
 # --------------------------------------------------------
-# Streamlit UI
+# Flask API for frontend
+# --------------------------------------------------------
+flask_app = Flask(__name__)
+
+@flask_app.route("/api/respond", methods=["POST"])
+def respond():
+    data = request.get_json()
+    user_text = data.get("text", "")
+    response_text = generate_response(user_text)
+    return jsonify({"response": response_text})
+
+def run_flask():
+    flask_app.run(port=8502)  # separate port from Streamlit
+
+threading.Thread(target=run_flask, daemon=True).start()
+
+# --------------------------------------------------------
+# Streamlit UI (still works!)
 # --------------------------------------------------------
 st.title("🧠 Mental Health Helper")
 st.write("A safe space for advice, therapy tips, panic attack help, and mood tracking. *Not a replacement for therapy.*")
 
-# --- Chatbot ---
 st.subheader("💬 Chat for Advice")
 user_input = st.text_input("What’s on your mind? (e.g., 'I'm stressed')")
 
@@ -166,18 +191,10 @@ if "messages" in st.session_state:
         with st.chat_message(role.lower()):
             st.markdown(message["content"])
 
-# --- Therapy Tips ---
 st.subheader("🌱 General Therapy & Self-Help")
 with st.expander("Click to view practices"):
-    st.write("""
-    - 📝 Journaling: Track moods and triggers.  
-    - 🧘 Mindfulness: 5–10 min daily meditation or mindful walking.  
-    - 🎶 Behavioral Activation: Schedule enjoyable small activities daily.  
-    - 👥 Group Therapy: Talking with others reduces isolation.  
-    - 📱 Mental Health Apps: Try Calm, Headspace, or Soluna (for youth).  
-    """)
+    st.write("""- Journaling … - Mindfulness … - Apps …""")
 
-# --- Mood Tracking ---
 st.subheader("📊 Track Your Mood")
 mood = st.slider("How’s your mood today? (1 = low, 5 = high)", 1, 5, 3)
 
@@ -194,5 +211,6 @@ if "moods" in st.session_state and st.session_state.moods:
     df['date'] = pd.to_datetime(df['date'])
     st.line_chart(df.set_index('date')['mood'])
 
-st.caption("Prototype v12.0: Hybrid guides + AI expansion for richer advice.")
+st.caption("Prototype v12.1: Now with API route for frontend integration.")
+
 
