@@ -365,14 +365,14 @@
         </div>
     </div>
 
-    <script>
-        // Global variables
-        let messages = [];
-        let moods = [];
+<script>
+    // Global variables
+    let messages = [];
+    let moods = [];
 
-        // Topic-specific guides
-        const guides = {
-            stress: `😌 *Coping with Stress*
+    // Topic-specific guides
+    const guides = {
+        stress: `😌 *Coping with Stress*
 
 1. Take short breaks every 1–2 hours of work/study.  
 2. Practice deep breathing (inhale 4s, exhale 6s).  
@@ -380,14 +380,14 @@
 4. Write down your worries, then list 1 small action for each.  
 5. Try light exercise (walk, stretch, yoga).`,
 
-            panic: `😮‍💨 *Panic/Anxiety Attack Help*
+        panic: `😮‍💨 *Panic/Anxiety Attack Help*
 
 1. Remind yourself: "This will pass."  
 2. Try 4-7-8 breathing (inhale 4s, hold 7s, exhale 8s).  
 3. Use grounding: 5 things you see, 4 touch, 3 hear, 2 smell, 1 taste.  
 4. Splash cold water on your face.`,
 
-            depression: `🌧 *When Feeling Low/Depressed*
+        depression: `🌧 *When Feeling Low/Depressed*
 
 1. Keep a daily routine (wake/sleep times).  
 2. Schedule at least one enjoyable activity daily.  
@@ -395,41 +395,41 @@
 4. Avoid isolation—spend time in sunlight/nature.  
 5. Journal your feelings, note small positives each day.`,
 
-            sleep: `🌙 *Better Sleep Tips*
+        sleep: `🌙 *Better Sleep Tips*
 
 1. Keep a fixed bedtime and wake-up time.  
 2. Avoid caffeine or phone screens 2 hours before bed.  
 3. Use relaxation routines: soft music, reading, or meditation.  
 4. Keep your room dark, cool, and quiet.`
-        };
+    };
 
-        const resources = `📞 *Crisis Resources (If You're Struggling)*
+    const resources = `📞 *Crisis Resources (If You're Struggling)*
 
-- 988 Suicide & Crisis Lifeline: Call/text 14416  (24/7, free, confidential).  
+- 988 Suicide & Crisis Lifeline: Call/text 14416 (24/7, free, confidential).  
 - Crisis Text Line: Text HOME to 741741 (free, anonymous, 24/7).  
 - Soluna App: Free for ages 13–25 (iOS/Android).  
 
 ⚠ Reminder: This app is not medical advice—please consult a licensed professional if you're in crisis.`;
 
-        function generateResponse(userInput) {
-            const text = userInput.toLowerCase();
+    // Local fallback generator
+    function generateResponse(userInput) {
+        const text = userInput.toLowerCase();
+        const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening'];
 
-             const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening'];
-    if (greetings.some(greet => text === greet || text.startsWith(greet + ' ') || text.endsWith(' ' + greet) || text.includes(' ' + greet + ' '))) {
-        return `Hello! 👋 How can I support you today? Feel free to share what's on your mind.`;
-    }
-            
-            if (text.includes('panic') || text.includes('anxiety') || text.includes('attack')) {
-                return guides.panic + "\n\n" + resources;
-            } else if (text.includes('stress') || text.includes('stressed') || text.includes('pressure')) {
-                return guides.stress;
-            } else if (text.includes('depressed') || text.includes('sad') || text.includes('low') || text.includes('hopeless')) {
-                return guides.depression + "\n\n" + resources;
-            } else if (text.includes('sleep') || text.includes('insomnia') || text.includes('tired')) {
-                return guides.sleep;
-            } else {
-                // Fallback response
-                return `Thank you for sharing that with me. Here are some general suggestions that might help:
+        if (greetings.some(greet => text === greet || text.startsWith(greet + ' ') || text.endsWith(' ' + greet) || text.includes(' ' + greet + ' '))) {
+            return `Hello! 👋 How can I support you today? Feel free to share what's on your mind.`;
+        }
+
+        if (text.includes('panic') || text.includes('anxiety') || text.includes('attack')) {
+            return guides.panic + "\n\n" + resources;
+        } else if (text.includes('stress') || text.includes('stressed') || text.includes('pressure')) {
+            return guides.stress;
+        } else if (text.includes('depressed') || text.includes('sad') || text.includes('low') || text.includes('hopeless')) {
+            return guides.depression + "\n\n" + resources;
+        } else if (text.includes('sleep') || text.includes('insomnia') || text.includes('tired')) {
+            return guides.sleep;
+        } else {
+            return `Thank you for sharing that with me. Here are some general suggestions that might help:
 
 1. Take a moment to breathe deeply and ground yourself in the present moment.
 2. Remember that difficult feelings are temporary and will pass.
@@ -438,106 +438,121 @@
 5. If these feelings persist, don't hesitate to seek professional support.
 
 Remember, you're taking a positive step by seeking help and guidance. 🌟`;
-            }
         }
+    }
 
-        function getAdvice() {
-            const userInput = document.getElementById('userInput').value.trim();
-            if (!userInput) return;
+    // Main advice function (tries backend first, then fallback)
+    async function getAdvice() {
+        const userInput = document.getElementById('userInput').value.trim();
+        if (!userInput) return;
 
-            // Clear previous messages (auto-clearing feature)
-            messages = [];
-            
-            // Add user message
-            messages.push({ role: 'user', content: userInput });
-            
-            // Generate AI response
+        messages = [];
+        messages.push({ role: 'user', content: userInput });
+
+        try {
+            const res = await fetch("http://localhost:8502/api/respond", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: userInput })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                messages.push({ role: 'ai', content: data.response });
+            } else {
+                throw new Error("Backend error");
+            }
+        } catch (err) {
+            // Use fallback if backend fails
             const aiResponse = generateResponse(userInput);
             messages.push({ role: 'ai', content: aiResponse });
-
-            displayMessages();
-            document.getElementById('userInput').value = '';
         }
 
-        function displayMessages() {
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';
-            messagesDiv.style.display = 'block';
+        displayMessages();
+        document.getElementById('userInput').value = '';
+    }
 
-            messages.forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${message.role}`;
-                
-                const roleDiv = document.createElement('div');
-                roleDiv.className = 'message-role';
-                roleDiv.textContent = message.role === 'user' ? 'You:' : 'AI:';
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.innerHTML = message.content.replace(/\n/g, '<br>');
-                
-                messageDiv.appendChild(roleDiv);
-                messageDiv.appendChild(contentDiv);
-                messagesDiv.appendChild(messageDiv);
-            });
+    // Display chat messages
+    function displayMessages() {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = '';
+        messagesDiv.style.display = 'block';
 
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
+        messages.forEach(message => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.role}`;
 
-        function updateMoodDisplay() {
-            const slider = document.getElementById('moodSlider');
-            const display = document.getElementById('moodDisplay');
-            const moodLabels = ['😢 Very Low', '😔 Low', '😐 Neutral', '🙂 Good', '😊 Great'];
-            display.textContent = `Mood: ${slider.value}/5 - ${moodLabels[slider.value - 1]}`;
-        }
+            const roleDiv = document.createElement('div');
+            roleDiv.className = 'message-role';
+            roleDiv.textContent = message.role === 'user' ? 'You:' : 'AI:';
 
-        function logMood() {
-            const moodValue = parseInt(document.getElementById('moodSlider').value);
-            const now = new Date();
-            
-            // Clear old moods (auto-clearing feature)
-            moods = [];
-            
-            moods.push({
-                date: now.toLocaleString(),
-                mood: moodValue
-            });
+            const contentDiv = document.createElement('div');
+            contentDiv.innerHTML = message.content.replace(/\n/g, '<br>');
 
-            const chartDiv = document.getElementById('moodChart');
-            chartDiv.style.display = 'block';
-            chartDiv.innerHTML = `
-                <div style="text-align: center;">
-                    <h3 style="color: #c9b675; margin-bottom: 10px;">Your Latest Mood Log</h3>
-                    <p><strong>Date:</strong> ${moods[0].date}</p>
-                    <p><strong>Mood:</strong> ${moods[0].mood}/5</p>
-                    <div style="margin-top: 15px; font-size: 2em;">
-                        ${['😢', '😔', '😐', '🙂', '😊'][moods[0].mood - 1]}
-                    </div>
-                </div>
-            `;
-        }
-
-        function toggleExpander(header) {
-            const content = header.nextElementSibling;
-            const arrow = header.querySelector('span') || header;
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                header.innerHTML = header.innerHTML.replace('▲', '▼');
-            } else {
-                content.classList.add('show');
-                header.innerHTML = header.innerHTML.replace('▼', '▲');
-            }
-        }
-
-        // Allow Enter key to submit
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                getAdvice();
-            }
+            messageDiv.appendChild(roleDiv);
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
         });
 
-        // Initialize mood display
-        updateMoodDisplay();
-    </script>
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Mood slider
+    function updateMoodDisplay() {
+        const slider = document.getElementById('moodSlider');
+        const display = document.getElementById('moodDisplay');
+        const moodLabels = ['😢 Very Low', '😔 Low', '😐 Neutral', '🙂 Good', '😊 Great'];
+        display.textContent = `Mood: ${slider.value}/5 - ${moodLabels[slider.value - 1]}`;
+    }
+
+    function logMood() {
+        const moodValue = parseInt(document.getElementById('moodSlider').value);
+        const now = new Date();
+
+        moods = [];
+        moods.push({
+            date: now.toLocaleString(),
+            mood: moodValue
+        });
+
+        const chartDiv = document.getElementById('moodChart');
+        chartDiv.style.display = 'block';
+        chartDiv.innerHTML = `
+            <div style="text-align: center;">
+                <h3 style="color: #c9b675; margin-bottom: 10px;">Your Latest Mood Log</h3>
+                <p><strong>Date:</strong> ${moods[0].date}</p>
+                <p><strong>Mood:</strong> ${moods[0].mood}/5</p>
+                <div style="margin-top: 15px; font-size: 2em;">
+                    ${['😢', '😔', '😐', '🙂', '😊'][moods[0].mood - 1]}
+                </div>
+            </div>
+        `;
+    }
+
+    // Expander toggle
+    function toggleExpander(header) {
+        const content = header.nextElementSibling;
+        const arrow = header.querySelector('span') || header;
+
+        if (content.classList.contains('show')) {
+            content.classList.remove('show');
+            header.innerHTML = header.innerHTML.replace('▲', '▼');
+        } else {
+            content.classList.add('show');
+            header.innerHTML = header.innerHTML.replace('▼', '▲');
+        }
+    }
+
+    // Enter key to send
+    document.getElementById('userInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            getAdvice();
+        }
+    });
+
+    // Initialize mood display
+    updateMoodDisplay();
+</script>
+
 </body>
 </html>
