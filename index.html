@@ -413,6 +413,11 @@
 
         function generateResponse(userInput) {
             const text = userInput.toLowerCase();
+
+             const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening'];
+    if (greetings.some(greet => text === greet || text.startsWith(greet + ' ') || text.endsWith(' ' + greet) || text.includes(' ' + greet + ' '))) {
+        return `Hello! 👋 How can I support you today? Feel free to share what's on your mind.`;
+    }
             
             if (text.includes('panic') || text.includes('anxiety') || text.includes('attack')) {
                 return guides.panic + "\n\n" + resources;
