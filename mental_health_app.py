@@ -94,10 +94,14 @@ resources = """
 # --------------------------------------------------------
 def generate_response(user_input):
     text = user_input.lower()
+text_clean = text.translate(str.maketrans('', '', string.punctuation))
 
     greetings = ["hi", "hello", "hey", "how are you", "how are you doing", "good morning", "good afternoon", "good evening"]
-    if any(greet in text for greet in greetings):
+
+    # check if text_clean is exactly one of greetings or starts with one
+    if any(text_clean == greet or text_clean.startswith(greet + " ") for greet in greetings):
         return "Hello! 😊 How can I support you today?"
+
         
     if any(word in text for word in ["panic", "anxiety", "attack"]):
         return panic_guide + "\n\n" + resources
