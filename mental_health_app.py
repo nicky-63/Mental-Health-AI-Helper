@@ -1,11 +1,10 @@
 import os
 import streamlit as st
-from transformers import pipeline
-from datetime import datetime
 import logging
 import pandas as pd
-import string
-import google.generativeai as genai  # ✅ NEW
+from datetime import datetime
+import google.generativeai as genai
+from transformers import pipeline
 
 # --------------------------------------------------------
 # Logging setup
@@ -14,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------
-# Hugging Face cache setup
+# Hugging Face fallback setup (gpt2-medium)
 # --------------------------------------------------------
 cache_dir = "/tmp/hf_cache"
 os.environ["TRANSFORMERS_CACHE"] = cache_dir
@@ -23,36 +22,31 @@ os.environ["HUGGINGFACE_HUB_CACHE"] = cache_dir
 
 try:
     os.makedirs(cache_dir, exist_ok=True)
-    logger.info(f"Created cache directory: {cache_dir}")
 except Exception as e:
-    logger.error(f"Cache directory error: {e}")
-    st.error(f"Cannot create cache directory: {e}. Please try refreshing or contact support.")
+    st.error(f"Cache directory error: {e}")
     st.stop()
 
-# --------------------------------------------------------
-# Load model (use gpt2-medium for fallback responses)
-# --------------------------------------------------------
 try:
     generator = pipeline('text-generation', model='gpt2-medium', cache_dir=cache_dir)
-    logger.info("Successfully loaded gpt2-medium model")
+    logger.info("Loaded gpt2-medium model")
 except Exception as e:
-    logger.error(f"Model loading failed: {e}")
-    st.error(f"Error loading model: {e}. Please try refreshing or contact support.")
-    st.stop()
+    st.error(f"Error loading GPT-2 model: {e}")
+    generator = None
 
 # --------------------------------------------------------
-# Configure Gemini (primary model)
+# Configure Gemini (Google AI Studio)
 # --------------------------------------------------------
-try:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    gemini_model = genai.GenerativeModel("gemini-1.5-flash")
-    logger.info("Successfully configured Gemini model")
-except Exception as e:
-    logger.error(f"Gemini setup failed: {e}")
-    st.warning("Gemini is not available, falling back to Hugging Face.")
+GEMINI_MODEL = None
+if "GOOGLE_API_KEY" in st.secrets:
+    try:
+        genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+        GEMINI_MODEL = genai.GenerativeModel("gemini-1.5-flash")
+        logger.info("Gemini model ready")
+    except Exception as e:
+        logger.error(f"Gemini init failed: {e}")
 
 # --------------------------------------------------------
-# Topic-specific guides
+# Guides
 # --------------------------------------------------------
 stress_guide = """
 😌 *Coping with Stress*
@@ -93,7 +87,7 @@ sleep_guide = """
 """
 
 resources = """
-📞 *Crisis Resources (If You’re Struggling)*
+📞 *Crisis Resources*
 
 - 988 Suicide & Crisis Lifeline: Call/text 988 (24/7, free, confidential).  
 - Crisis Text Line: Text HOME to 741741 (free, anonymous, 24/7).  
@@ -103,104 +97,102 @@ resources = """
 """
 
 # --------------------------------------------------------
-# AI Response generator with topic-specific guides
+# Response generator (Hybrid: guide + Gemini expansion)
 # --------------------------------------------------------
-def generate_response(user_input):
+def expand_with_gemini(base_text: str) -> str:
+    if GEMINI_MODEL:
+        try:
+            response = GEMINI_MODEL.generate_content(
+                f"Expand this wellness guide with 2–3 additional practical, empathetic tips:\n\n{base_text}"
+            )
+            if response and response.text:
+                return base_text + "\n\n💡 Extra AI Tips:\n" + response.text.strip()
+        except Exception as e:
+            logger.error(f"Gemini expansion failed: {e}")
+    return base_text
+
+def generate_response(user_input: str) -> str:
     text = user_input.lower()
-    text_clean = text.translate(str.maketrans('', '', string.punctuation))
-
-    greetings = ["hi", "hello", "hey", "how are you", "how are you doing", "good morning", "good afternoon", "good evening"]
-
-    if any(text_clean == greet or text_clean.startswith(greet + " ") for greet in greetings):
-        return "Hello! 😊 How can I support you today?"
 
     if any(word in text for word in ["panic", "anxiety", "attack"]):
-        return panic_guide + "\n\n" + resources
+        return expand_with_gemini(panic_guide + "\n\n" + resources)
     elif any(word in text for word in ["stress", "stressed", "pressure"]):
-        return stress_guide
+        return expand_with_gemini(stress_guide)
     elif any(word in text for word in ["depressed", "sad", "low", "hopeless"]):
-        return depression_guide + "\n\n" + resources
+        return expand_with_gemini(depression_guide + "\n\n" + resources)
     elif any(word in text for word in ["sleep", "insomnia", "tired"]):
-        return sleep_guide
+        return expand_with_gemini(sleep_guide)
     else:
-        # fallback: AI-generated advice
+        # Full AI fallback (Gemini → GPT-2 → default message)
         prompt = (
-            f"You are a supportive AI wellness guide. The user said: '{user_input}'.\n"
-            f"Give practical advice in 3–5 clear steps. Keep it warm and useful."
+            f"You are a supportive mental health assistant.\n"
+            f"User: '{user_input}'\n"
+            f"Give 3–5 clear, practical, empathetic tips."
         )
-        try:
-            # ✅ First try Gemini
-            response = gemini_model.generate_content(prompt)
-            return response.text.strip()
-        except Exception as e:
-            logger.error(f"Gemini response failed: {e}")
+        if GEMINI_MODEL:
             try:
-                # fallback to Hugging Face
-                response = generator(
-                    prompt,
-                    max_length=250,
-                    num_return_sequences=1,
-                    temperature=0.85,
-                    top_p=0.9,
-                    no_repeat_ngram_size=3,
-                    pad_token_id=generator.tokenizer.eos_token_id
-                )[0]['generated_text']
-                return response.replace(prompt, "").strip()
-            except Exception as e2:
-                logger.error(f"Hugging Face fallback failed: {e2}")
-                return "Sorry, I couldn’t generate advice right now. Try again."
+                response = GEMINI_MODEL.generate_content(prompt)
+                return response.text.strip() if response and response.text else "Couldn’t generate advice."
+            except Exception as e:
+                logger.error(f"Gemini error: {e}")
+        if generator:
+            try:
+                result = generator(prompt, max_length=200, num_return_sequences=1)[0]['generated_text']
+                return result.replace(prompt, "").strip()
+            except Exception as e:
+                logger.error(f"GPT-2 error: {e}")
+        return "Sorry, I couldn’t generate advice right now."
 
 # --------------------------------------------------------
-# Streamlit App
+# Streamlit UI
 # --------------------------------------------------------
 st.title("🧠 Mental Health Helper")
-st.write("A safe space to get advice, therapy tips, panic attack help, and track your mood. Not a replacement for therapy.")
+st.write("A safe space for advice, therapy tips, panic attack help, and mood tracking. *Not a replacement for therapy.*")
 
-# --------------------------
-# Feature 1: Chatbot
-# --------------------------
+# --- Chatbot ---
 st.subheader("💬 Chat for Advice")
-user_input = st.text_input("What’s on your mind? (e.g., 'I'm stressed'):")
+user_input = st.text_input("What’s on your mind? (e.g., 'I'm stressed')")
 
 if st.button("Get Advice") and user_input:
-    st.session_state['messages'] = []
+    if "messages" not in st.session_state:
+        st.session_state['messages'] = []
     st.session_state.messages.append({"role": "user", "content": user_input})
     ai_response = generate_response(user_input)
     st.session_state.messages.append({"role": "ai", "content": ai_response})
 
+if "messages" in st.session_state:
     for message in st.session_state.messages:
         role = "You" if message["role"] == "user" else "AI"
-        st.markdown(f"{role}:** {message['content']}")
+        with st.chat_message(role.lower()):
+            st.markdown(message["content"])
 
-# --------------------------
-# Feature 2: Therapy Tips
-# --------------------------
-st.subheader("🌱 General Therapy & Self-Help Options")
-with st.expander("Click to view general therapy practices"):
+# --- Therapy Tips ---
+st.subheader("🌱 General Therapy & Self-Help")
+with st.expander("Click to view practices"):
     st.write("""
-    - 📝 Journaling: Helps track mood triggers and progress.  
-    - 🧘 Mindfulness: Try 5–10 minutes daily meditation or mindful walking.  
+    - 📝 Journaling: Track moods and triggers.  
+    - 🧘 Mindfulness: 5–10 min daily meditation or mindful walking.  
     - 🎶 Behavioral Activation: Schedule enjoyable small activities daily.  
     - 👥 Group Therapy: Talking with others reduces isolation.  
+    - 📱 Mental Health Apps: Try Calm, Headspace, or Soluna (for youth).  
     """)
 
-# --------------------------
-# Feature 3: Mood Tracking
-# --------------------------
+# --- Mood Tracking ---
 st.subheader("📊 Track Your Mood")
 mood = st.slider("How’s your mood today? (1 = low, 5 = high)", 1, 5, 3)
 
 if st.button("Log Mood"):
-    st.session_state['moods'] = []
+    if "moods" not in st.session_state:
+        st.session_state['moods'] = []
     st.session_state.moods.append({
         'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
         'mood': mood
     })
 
-if 'moods' in st.session_state and st.session_state.moods:
-    st.write("Your Mood (Latest Log Only):")
+if "moods" in st.session_state and st.session_state.moods:
     df = pd.DataFrame(st.session_state.moods)
     df['date'] = pd.to_datetime(df['date'])
     st.line_chart(df.set_index('date')['mood'])
 
-st.write("Prototype v11.0: Topic-specific solutions with Gemini + Hugging Face fallback.")
+st.caption("Prototype v12.0: Hybrid guides + AI expansion for richer advice.")
+
