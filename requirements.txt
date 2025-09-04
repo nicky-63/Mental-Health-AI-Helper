@@ -3,4 +3,6 @@ torch
 transformers
 numpy
 pandas
+google-generativeai
+streamlit
 
