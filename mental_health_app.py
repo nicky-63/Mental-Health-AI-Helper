@@ -4,12 +4,14 @@ from transformers import pipeline
 from datetime import datetime
 import logging
 import pandas as pd
+import string
+import google.generativeai as genai  # ✅ NEW
 
 # --------------------------------------------------------
 # Logging setup
 # --------------------------------------------------------
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------
 # Hugging Face cache setup
@@ -37,6 +39,17 @@ except Exception as e:
     logger.error(f"Model loading failed: {e}")
     st.error(f"Error loading model: {e}. Please try refreshing or contact support.")
     st.stop()
+
+# --------------------------------------------------------
+# Configure Gemini (primary model)
+# --------------------------------------------------------
+try:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+    logger.info("Successfully configured Gemini model")
+except Exception as e:
+    logger.error(f"Gemini setup failed: {e}")
+    st.warning("Gemini is not available, falling back to Hugging Face.")
 
 # --------------------------------------------------------
 # Topic-specific guides
@@ -94,15 +107,13 @@ resources = """
 # --------------------------------------------------------
 def generate_response(user_input):
     text = user_input.lower()
-text_clean = text.translate(str.maketrans('', '', string.punctuation))
+    text_clean = text.translate(str.maketrans('', '', string.punctuation))
 
     greetings = ["hi", "hello", "hey", "how are you", "how are you doing", "good morning", "good afternoon", "good evening"]
 
-    # check if text_clean is exactly one of greetings or starts with one
     if any(text_clean == greet or text_clean.startswith(greet + " ") for greet in greetings):
         return "Hello! 😊 How can I support you today?"
 
-        
     if any(word in text for word in ["panic", "anxiety", "attack"]):
         return panic_guide + "\n\n" + resources
     elif any(word in text for word in ["stress", "stressed", "pressure"]):
@@ -118,19 +129,26 @@ text_clean = text.translate(str.maketrans('', '', string.punctuation))
             f"Give practical advice in 3–5 clear steps. Keep it warm and useful."
         )
         try:
-            response = generator(
-                prompt,
-                max_length=250,
-                num_return_sequences=1,
-                temperature=0.85,
-                top_p=0.9,
-                no_repeat_ngram_size=3,
-                pad_token_id=generator.tokenizer.eos_token_id
-            )[0]['generated_text']
-            return response.replace(prompt, "").strip()
+            # ✅ First try Gemini
+            response = gemini_model.generate_content(prompt)
+            return response.text.strip()
         except Exception as e:
-            logger.error(f"Error generating response: {e}")
-            return "Sorry, I couldn’t generate advice right now. Try again."
+            logger.error(f"Gemini response failed: {e}")
+            try:
+                # fallback to Hugging Face
+                response = generator(
+                    prompt,
+                    max_length=250,
+                    num_return_sequences=1,
+                    temperature=0.85,
+                    top_p=0.9,
+                    no_repeat_ngram_size=3,
+                    pad_token_id=generator.tokenizer.eos_token_id
+                )[0]['generated_text']
+                return response.replace(prompt, "").strip()
+            except Exception as e2:
+                logger.error(f"Hugging Face fallback failed: {e2}")
+                return "Sorry, I couldn’t generate advice right now. Try again."
 
 # --------------------------------------------------------
 # Streamlit App
@@ -139,13 +157,12 @@ st.title("🧠 Mental Health Helper")
 st.write("A safe space to get advice, therapy tips, panic attack help, and track your mood. Not a replacement for therapy.")
 
 # --------------------------
-# Feature 1: Chatbot (always fresh)
+# Feature 1: Chatbot
 # --------------------------
 st.subheader("💬 Chat for Advice")
 user_input = st.text_input("What’s on your mind? (e.g., 'I'm stressed'):")
 
 if st.button("Get Advice") and user_input:
-    # clear previous chat automatically
     st.session_state['messages'] = []
     st.session_state.messages.append({"role": "user", "content": user_input})
     ai_response = generate_response(user_input)
@@ -156,7 +173,7 @@ if st.button("Get Advice") and user_input:
         st.markdown(f"{role}:** {message['content']}")
 
 # --------------------------
-# Feature 2: Therapy Tips (general, always available)
+# Feature 2: Therapy Tips
 # --------------------------
 st.subheader("🌱 General Therapy & Self-Help Options")
 with st.expander("Click to view general therapy practices"):
@@ -168,13 +185,12 @@ with st.expander("Click to view general therapy practices"):
     """)
 
 # --------------------------
-# Feature 3: Mood Tracking (fresh each time)
+# Feature 3: Mood Tracking
 # --------------------------
 st.subheader("📊 Track Your Mood")
 mood = st.slider("How’s your mood today? (1 = low, 5 = high)", 1, 5, 3)
 
 if st.button("Log Mood"):
-    # clear old moods each time
     st.session_state['moods'] = []
     st.session_state.moods.append({
         'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
@@ -187,4 +203,4 @@ if 'moods' in st.session_state and st.session_state.moods:
     df['date'] = pd.to_datetime(df['date'])
     st.line_chart(df.set_index('date')['mood'])
 
-st.write("Prototype v11.0: Topic-specific solutions with auto-clearing history.")
+st.write("Prototype v11.0: Topic-specific solutions with Gemini + Hugging Face fallback.")
