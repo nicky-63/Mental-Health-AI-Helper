@@ -193,7 +193,33 @@ if "messages" in st.session_state:
 
 st.subheader("🌱 General Therapy & Self-Help")
 with st.expander("Click to view practices"):
-    st.write("""- Journaling … - Mindfulness … - Apps …""")
+    st.write("""Cognitive Behavioral Techniques (CBT)
+
+Thought Challenging: Identify negative automatic thoughts and question their accuracy.
+Behavioral Activation: Plan small, rewarding activities daily to improve motivation and mood.
+Problem-Solving: Break overwhelming challenges into smaller, actionable steps.
+Exposure Practice: Gradually face avoided situations to reduce fear and anxiety.
+
+ Mindfulness & Relaxation
+
+Progressive Muscle Relaxation (PMR): Tense and release muscle groups to ease physical tension.
+Mindful Breathing: Focus on slow, deep breathing for 5–10 minutes daily.
+Grounding Techniques: Use the 5-4-3-2-1 sensory method to stay present during stress.
+Body Scan Meditation: Notice sensations in each part of your body to calm the mind.
+
+💚 Self-Care Strategies
+
+Sleep Hygiene: Stick to a consistent bedtime and wake-up time.
+Physical Activity: Regular walking, stretching, or exercise to boost mood.
+Social Connection: Maintain supportive relationships and talk about your feelings.
+Journaling: Track thoughts, emotions, and patterns to increase self-awareness.
+
+🆘 Crisis Management
+
+Safety Planning: Identify warning signs, coping tools, and safe contacts.
+Crisis Lines: Know local/national emergency resources (like 988 in the US, 14416 in India).
+Emergency Support Network: Share a list of trusted contacts you can reach out to.
+Professional Help: Seek immediate support if you’re at risk of harming yourself.""")
 
 st.subheader("📊 Track Your Mood")
 mood = st.slider("How’s your mood today? (1 = low, 5 = high)", 1, 5, 3)
