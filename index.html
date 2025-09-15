@@ -432,8 +432,6 @@ input[type="range"]::-webkit-slider-thumb {
   async function getAdvice() {
     const userInput = document.getElementById('userInput').value.trim();
     if (!userInput) return;
-
-    messages = [];
     messages.push({ role: 'user', content: userInput });
 
     try {
