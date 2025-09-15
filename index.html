@@ -458,35 +458,26 @@ const resources = `📞 Crisis Resources (If You're Struggling)
 
     return `General wellness tips:\n1. Breathe deeply...\n2. Reach out...\n3. Small self-care...`;
   }
+async function getAdvice() {
+  const userInput = document.getElementById('userInput').value.trim();
+  if (!userInput) return;
 
-  async function getAdvice() {
-    const userInput = document.getElementById('userInput').value.trim();
-    if (!userInput) return;
-    messages.push({ role: 'user', content: userInput });
+  // Add user message
+  messages.push({ role: 'user', content: userInput });
 
-    try {
-      const res = await fetch("http://localhost:8502/api/respond", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: userInput })
-      });
+  // Always use the fallback response (no backend required)
+  const aiResponse = generateResponse(userInput);
+  messages.push({ role: 'ai', content: aiResponse });
 
-      if (res.ok) {
-        const data = await res.json();
-        messages.push({ role: 'ai', content: data.response });
-        document.getElementById("poweredBy").style.display = "block"; // Show Gemini tag
-      } else {
-        throw new Error("Backend error");
-      }
-    } catch (err) {
-      const aiResponse = generateResponse(userInput);
-      messages.push({ role: 'ai', content: aiResponse });
-      document.getElementById("poweredBy").style.display = "none"; // Hide if fallback
-    }
+  // Update chat display
+  displayMessages();
 
-    displayMessages();
-    document.getElementById('userInput').value = '';
-  }
+  // Clear input
+  document.getElementById('userInput').value = '';
+
+  // Hide powered-by tag (since no AI backend is used)
+  document.getElementById("poweredBy").style.display = "none";
+}
 
   function displayMessages() {
     const messagesDiv = document.getElementById('messages');
