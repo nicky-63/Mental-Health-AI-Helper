@@ -2,7 +2,6 @@ import os
 import logging
 import pandas as pd
 from datetime import datetime
-import threading
 from flask import Flask, request, jsonify
 import streamlit as st
 
@@ -13,7 +12,7 @@ except Exception:
     genai = None
 
 try:
-    from transformers import pipeline, pipeline as hf_pipeline
+    from transformers import pipeline
 except Exception:
     pipeline = None
 
@@ -90,7 +89,8 @@ if pipeline:
 # --------------------------------------------------------
 GEMINI_MODEL = None
 if genai is not None:
-    key = st.secrets.get("AIzaSyAttoi7RF50jBTnBYHSqpgIbKzPsRx0ZME", os.getenv("AIzaSyAttoi7RF50jBTnBYHSqpgIbKzPsRx0ZME"))
+    # ✅ Fix: use a variable key name, not the actual key string
+    key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if key:
         try:
             genai.configure(api_key=key)
@@ -102,48 +102,66 @@ if genai is not None:
 # --------------------------------------------------------
 # Hybrid Response Generator
 # --------------------------------------------------------
-def expand_with_gemini(base_text: str) -> str:
-    if GEMINI_MODEL:
-        try:
-            resp = GEMINI_MODEL.generate_content(
-                f"Expand this wellness guide with 2–3 empathetic tips:\n\n{base_text}"
-            )
-            if resp and getattr(resp, "text", None):
-                return base_text + "\n\n💡 Extra AI Tips:\n" + resp.text.strip()
-        except Exception as e:
-            logger.error(f"Gemini expand failed: {e}")
-    return base_text
-
 def generate_response(user_input: str) -> str:
     label = classify_text(user_input)
     logger.info(f"Classifier prediction: {label}")
 
-    if label == "panic":
-        return expand_with_gemini(panic_guide + "\n\n" + resources)
-    elif label == "stress":
-        return expand_with_gemini(stress_guide)
-    elif label == "depression":
-        return expand_with_gemini(depression_guide + "\n\n" + resources)
-    elif label == "sleep":
-        return expand_with_gemini(sleep_guide)
-    else:  # general → send directly to Gemini
-        if GEMINI_MODEL:
-            try:
-                prompt = f"You are a supportive assistant. User: {user_input}\nGive 3–5 clear, practical, empathetic tips."
-                resp = GEMINI_MODEL.generate_content(prompt)
-                if resp and getattr(resp, "text", None):
-                    return resp.text.strip()
-            except Exception as e:
-                logger.error(f"Gemini general failed: {e}")
+    # Strong Gemini prompt for unique answers
+    prompt = f"""
+    You are a warm, empathetic mental health companion.
+    The user said: "{user_input}"
+    
+    Based on this, provide 3–5 practical, supportive, and fresh coping tips.
+    Avoid repeating the same tips word-for-word every time.
+    Use simple language, keep answers under 120 words.
+    """
 
-        if generator:  # fallback GPT-2
-            try:
-                out = generator(user_input, max_length=200, num_return_sequences=1)
-                return out[0]["generated_text"]
-            except Exception as e:
-                logger.error(f"HF fallback failed: {e}")
+    # Try Gemini first
+    if GEMINI_MODEL:
+        try:
+            resp = GEMINI_MODEL.generate_content(prompt)
+            if resp and getattr(resp, "text", None):
+                return resp.text.strip()
+        except Exception as e:
+            logger.error(f"Gemini generation failed: {e}")
 
-        return "Sorry, I couldn’t generate advice right now."
+    # Fallback guides with randomization
+    guides = {
+        "stress": [
+            "😌 Try deep breathing for 2 minutes",
+            "💧 Stay hydrated and take a short walk",
+            "📝 Write your worries down before sleeping"
+        ],
+        "panic": [
+            "😮‍💨 Focus on 5-4-3-2-1 grounding",
+            "📱 Call a friend you trust immediately",
+            "🎧 Listen to calming sounds"
+        ],
+        "depression": [
+            "🌧 Create a small daily goal (like making your bed)",
+            "💚 Text one person today, even a simple 'hi'",
+            "📖 Journal one positive thing about your day"
+        ],
+        "sleep": [
+            "🌙 Keep lights dim before bed",
+            "📵 No screens 1 hour before sleep",
+            "🛏️ Try a warm shower before bed"
+        ]
+    }
+
+    if label in guides:
+        import random
+        return random.choice(guides[label]) + "\n\n📞 Crisis Resources: 988 or Text HOME to 741741"
+
+    # If everything else fails → GPT-2
+    if generator:
+        try:
+            out = generator(user_input, max_length=200, num_return_sequences=1)
+            return out[0]["generated_text"]
+        except Exception as e:
+            logger.error(f"HF fallback failed: {e}")
+
+    return "Sorry, I couldn’t generate advice right now."
 
 # --------------------------------------------------------
 # Flask API
@@ -156,6 +174,8 @@ def respond():
     text = data.get("text", "")
     reply = generate_response(text)
     return jsonify({"response": reply})
+
+
 
 
 
