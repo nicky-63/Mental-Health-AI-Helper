@@ -421,7 +421,7 @@
         const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening'];
 
         if (greetings.some(greet => text === greet || text.startsWith(greet + ' ') || text.endsWith(' ' + greet) || text.includes(' ' + greet + ' '))) {
-            return Hello! 👋 How can I support you today? Feel free to share what's on your mind.;
+            return "Hello! 👋 How can I support you today? Feel free to share what's on your mind.";
         }
 
         if (text.includes('panic') || text.includes('anxiety') || text.includes('attack')) {
@@ -484,7 +484,7 @@ Remember, you're taking a positive step by seeking help and guidance. 🌟`;
 
         messages.forEach(message => {
             const messageDiv = document.createElement('div');
-            messageDiv.className = message ${message.role};
+            messageDiv.className = 'message ${message.role}';
 
             const roleDiv = document.createElement('div');
             roleDiv.className = 'message-role';
@@ -506,7 +506,7 @@ Remember, you're taking a positive step by seeking help and guidance. 🌟`;
         const slider = document.getElementById('moodSlider');
         const display = document.getElementById('moodDisplay');
         const moodLabels = ['😢 Very Low', '😔 Low', '😐 Neutral', '🙂 Good', '😊 Great'];
-        display.textContent = Mood: ${slider.value}/5 - ${moodLabels[slider.value - 1]};
+        display.textContent = 'Mood: ${slider.value}/5 - ${moodLabels[slider.value - 1]}';
     }
 
     function logMood() {
